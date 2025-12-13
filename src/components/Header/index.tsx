@@ -23,8 +23,21 @@ export default function Header() {
   }, [pathname, searchParams])
 
   return (
-    <nav className="fixed w-full z-20 top-0 start-0 border-b border-border bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/50">
-      <div className="max-w-screen-xl flex items-center justify-between mx-auto p-4">
+    <nav className="fixed w-full z-20 top-5 ">
+      <div
+        className="max-w-3xl mx-4
+    flex items-center justify-between
+    px-5 py-4
+    rounded-full
+    border border-border/60
+    bg-background/70
+    backdrop-blur-md
+    supports-[backdrop-filter]:bg-background/50
+    shadow-sm
+    hover:shadow-md
+    transition-all
+    md:mx-auto"
+      >
         {/* LOGO */}
         <Link href="/" className="text-xl font-semibold text-foreground">
           Аниме

@@ -1,10 +1,14 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-async function getAnime(params: { sort?: string }) {
-  const sort = params.sort === 'rating_asc' ? 'rating' : '-rating'
+type SearchParams = {
+  sort?: string
+}
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime?sort=${sort}`, {
+async function getAnime(sort?: string) {
+  const order = sort === 'rating_asc' ? 'rating' : '-rating'
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime?sort=${order}`, {
     cache: 'no-store',
   })
 
@@ -12,18 +16,18 @@ async function getAnime(params: { sort?: string }) {
   return data.docs
 }
 
-export default async function AnimePage({ searchParams }: any) {
-  const anime = await getAnime(searchParams)
-  const currentSort = searchParams.sort
+export default async function AnimePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams
+  const currentSort = params.sort ?? 'rating_desc'
+
+  const anime = await getAnime(currentSort)
 
   return (
     <div className="container mx-auto py-10 mt-20">
       {/* Фильтры */}
       <div className="flex gap-4 mb-6">
         <Link href="/anime?sort=rating_desc">
-          <Button variant={currentSort === 'rating_desc' || !currentSort ? 'default' : 'outline'}>
-            Рейтинг ↓
-          </Button>
+          <Button variant={currentSort === 'rating_desc' ? 'default' : 'outline'}>Рейтинг ↓</Button>
         </Link>
 
         <Link href="/anime?sort=rating_asc">

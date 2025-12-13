@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Eye, EyeOff } from 'lucide-react'
 
 type FormData = {
   email: string
@@ -26,6 +27,7 @@ export const CreateAccountForm: React.FC = () => {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<null | string>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     formState: { errors },
@@ -36,109 +38,121 @@ export const CreateAccountForm: React.FC = () => {
 
   const password = watch('password')
 
+  const passwordStrength =
+    password?.length >= 10 ? 'strong' : password?.length >= 6 ? 'medium' : 'weak'
+
   const onSubmit = useCallback(
     async (data: FormData) => {
-      // Убираем поле passwordConfirm — его нет в коллекции Payload
+      setLoading(true)
+      setError(null)
+
       const { passwordConfirm, ...payloadData } = data
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users`, {
-        body: JSON.stringify(payloadData),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        const json = await response.json().catch(() => null)
-        setError(json?.errors?.[0]?.message || 'Ошибка при создании аккаунта.')
-        return
-      }
-
-      const redirect = searchParams.get('redirect')
-
-      const timer = setTimeout(() => setLoading(true), 500)
-
       try {
-        // Логинимся только email + password
-        await login({
-          email: data.email,
-          password: data.password,
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadData),
         })
 
-        clearTimeout(timer)
+        if (!response.ok) {
+          const json = await response.json().catch(() => null)
+          throw new Error(json?.errors?.[0]?.message || 'Не удалось создать аккаунт')
+        }
 
-        if (redirect) router.push(redirect)
-        else router.push(`/account?success=${encodeURIComponent('Аккаунт успешно создан')}`)
-      } catch (_) {
-        clearTimeout(timer)
-        setError('Ошибка при входе. Проверьте данные и попробуйте снова.')
+        await login({ email: data.email, password: data.password })
+
+        const redirect = searchParams.get('redirect')
+        router.push(redirect ?? `/account?success=${encodeURIComponent('Аккаунт успешно создан')}`)
+      } catch (e: any) {
+        setError(e.message)
+      } finally {
+        setLoading(false)
       }
     },
     [login, router, searchParams],
   )
 
   return (
-    <form className="max-w-lg py-4" onSubmit={handleSubmit(onSubmit)}>
-      <div className="prose dark:prose-invert mb-6">
-        <p>Это место, где новые пользователи могут зарегистрироваться и создать аккаунт.</p>
-      </div>
-
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Message error={error} />
 
-      <div className="flex flex-col gap-8 mb-8">
-        <FormItem>
-          <Label htmlFor="email" className="mb-2">
-            Адрес электронной почты
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            {...register('email', { required: 'Email обязателен.' })}
-          />
-          {errors.email && <FormError message={errors.email.message} />}
-        </FormItem>
+      {/* EMAIL */}
+      <FormItem>
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          {...register('email', { required: 'Email обязателен.' })}
+        />
+        {errors.email && <FormError message={errors.email.message} />}
+      </FormItem>
 
-        <FormItem>
-          <Label htmlFor="password" className="mb-2">
-            Новый пароль
-          </Label>
+      {/* PASSWORD */}
+      <FormItem>
+        <Label htmlFor="password">Пароль</Label>
+
+        <div className="relative">
           <Input
             id="password"
-            type="password"
-            {...register('password', { required: 'Пароль обязателен.' })}
-          />
-          {errors.password && <FormError message={errors.password.message} />}
-        </FormItem>
-
-        <FormItem>
-          <Label htmlFor="passwordConfirm" className="mb-2">
-            Подтвердите пароль
-          </Label>
-          <Input
-            id="passwordConfirm"
-            type="password"
-            {...register('passwordConfirm', {
-              required: 'Пожалуйста, подтвердите пароль.',
-              validate: (value) => value === password || 'Пароли не совпадают',
+            type={showPassword ? 'text' : 'password'}
+            {...register('password', {
+              required: 'Пароль обязателен.',
+              minLength: { value: 6, message: 'Минимум 6 символов' },
             })}
           />
-          {errors.passwordConfirm && <FormError message={errors.passwordConfirm.message} />}
-        </FormItem>
-      </div>
 
-      <Button disabled={loading} type="submit" variant="default">
-        {loading ? 'Обработка...' : 'Создать аккаунт'}
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
+
+        {/* STRENGTH */}
+        {password && (
+          <p
+            className={`
+              text-xs mt-2
+              ${
+                passwordStrength === 'strong'
+                  ? 'text-emerald-500'
+                  : passwordStrength === 'medium'
+                    ? 'text-yellow-500'
+                    : 'text-red-500'
+              }
+            `}
+          >
+            {passwordStrength === 'strong' && 'Надёжный пароль'}
+            {passwordStrength === 'medium' && 'Средняя надёжность'}
+            {passwordStrength === 'weak' && 'Слишком простой пароль'}
+          </p>
+        )}
+
+        {errors.password && <FormError message={errors.password.message} />}
+      </FormItem>
+
+      {/* CONFIRM */}
+      <FormItem>
+        <Label htmlFor="passwordConfirm">Подтвердите пароль</Label>
+        <Input
+          id="passwordConfirm"
+          type="password"
+          {...register('passwordConfirm', {
+            required: 'Подтвердите пароль.',
+            validate: (value) => value === password || 'Пароли не совпадают',
+          })}
+        />
+        {errors.passwordConfirm && <FormError message={errors.passwordConfirm.message} />}
+      </FormItem>
+
+      {/* SUBMIT */}
+      <Button className="w-full" disabled={loading} type="submit">
+        {loading ? 'Создание аккаунта…' : 'Создать аккаунт'}
       </Button>
-
-      <div className="prose dark:prose-invert mt-8">
-        <p>
-          Уже есть аккаунт?{' '}
-          <Link href={`/login${allParams}`} className="text-primary hover:underline">
-            Войдите
-          </Link>
-        </p>
-      </div>
     </form>
   )
 }

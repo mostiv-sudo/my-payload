@@ -23,7 +23,7 @@ export default async function AnimePage({ searchParams }: { searchParams: Promis
   })
 
   return (
-    <div className="container mx-auto py-10 mt-20">
+    <div className="container mx-auto py-10">
       <h1 className="text-3xl font-bold mb-6">Каталог</h1>
       {/* ФИЛЬТРЫ */}
       <div className="flex gap-4 mb-6">

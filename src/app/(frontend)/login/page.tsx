@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-
 import Link from 'next/link'
 import React from 'react'
 
@@ -19,16 +18,49 @@ export default async function Login() {
   }
 
   return (
-    <div className="container mt-40">
-      <div className="max-w-xl mx-auto my-12">
-        <h1 className="mb-4 text-[1.8rem] font-semibold">Вход в аккаунт</h1>
+    <div className="relative flex min-h-[73vh] items-center justify-center px-4">
+      {/* BACKGROUND */}
+      {/* <div className="absolute inset-0 -z-10 bg-gradient-to-br from-sky-500/10 via-transparent to-emerald-500/10" /> */}
 
-        <p className="mb-8 text-muted-foreground leading-relaxed">
-          Войдите в свой аккаунт, чтобы управлять профилем, просматривать историю действий и
-          получать персональные рекомендации.
-        </p>
+      {/* CARD */}
+      <div
+        className="
+          w-full max-w-lg rounded-3xl
+          border border-border/60
+          bg-background/80
+          backdrop-blur-xl
+          supports-[backdrop-filter]:bg-background/60
+          shadow-lg
+          p-8 md:p-10
+        "
+      >
+        {/* HEADER */}
+        <div className="mb-6 text-center">
+          <h1
+            className="
+              text-3xl font-bold
+              bg-gradient-to-r from-sky-400 to-emerald-500
+              bg-clip-text text-transparent
+            "
+          >
+            Вход в аккаунт
+          </h1>
 
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+            Войдите, чтобы управлять профилем, получать рекомендации и продолжить просмотр.
+          </p>
+        </div>
+
+        {/* FORM */}
         <LoginForm />
+
+        {/* FOOTER */}
+        <div className="mt-6 text-center text-sm text-muted-foreground">
+          Нет аккаунта?{' '}
+          <Link href="/create-account" className="font-medium text-primary hover:underline">
+            Зарегистрироваться
+          </Link>
+        </div>
       </div>
     </div>
   )
@@ -36,7 +68,7 @@ export default async function Login() {
 
 export const metadata: Metadata = {
   title: 'Вход',
-  description: 'Войдите в аккаунт или создайте новый, чтобы продолжить.',
+  description: 'Войдите в аккаунт, чтобы получить доступ ко всем возможностям сервиса.',
   openGraph: {
     title: 'Вход',
     url: '/login',

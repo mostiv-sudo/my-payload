@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             <Header />
 
-            <main className="pt-20 container mx-auto">{children}</main>
+            <main className="pt-20 mx-auto">{children}</main>
 
             <Footer />
           </ThemeProvider>

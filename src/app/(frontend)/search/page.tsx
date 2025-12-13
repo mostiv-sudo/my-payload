@@ -111,7 +111,7 @@ export default function SearchPage() {
   }, [q])
 
   return (
-    <div className="container max-w-7xl py-12 ">
+    <div className="lg:mx-auto mx-3 max-w-7xl  pt-12 pb-5">
       <Card className="min-h-[80vh]">
         <CardHeader>
           <CardTitle className="text-2xl">Поиск</CardTitle>

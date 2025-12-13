@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { headers as getHeaders } from 'next/headers.js'
+import { headers as getHeaders } from 'next/headers'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
@@ -10,13 +10,51 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const { user } = await payload.auth({ headers })
 
   return (
-    <div>
-      <div className="container">RenderParams</div>
+    <div className="min-h-[70vh]">
+      <div className="container mx-auto pt-24 pb-16">
+        <div className="flex flex-col lg:flex-row gap-10">
+          {/* SIDEBAR */}
+          {user && (
+            <aside
+              className="
+                w-full lg:w-64 shrink-0
+                rounded-2xl
+                border border-border/60
+                bg-background/70
+                backdrop-blur-md
+                supports-[backdrop-filter]:bg-background/50
+                shadow-sm
+                p-5
+                h-fit
+              "
+            >
+              <h2 className="text-sm font-semibold text-muted-foreground mb-4">Меню</h2>
 
-      <div className="container mt-16 pb-8 flex gap-8">
-        {user && 'AccountNav '}
+              {/* AccountNav */}
+              <nav className="flex flex-col gap-2">
+                {/* сюда подключишь AccountNav */}
+                <span className="text-sm text-muted-foreground">AccountNav</span>
+              </nav>
+            </aside>
+          )}
 
-        <div className="flex flex-col gap-12 grow">{children}</div>
+          {/* CONTENT */}
+          <main className="flex-1">
+            <div
+              className="
+                rounded-2xl
+                border border-border/60
+                bg-background/70
+                backdrop-blur-md
+                supports-[backdrop-filter]:bg-background/50
+                shadow-sm
+                p-6 sm:p-8
+              "
+            >
+              {children}
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   )

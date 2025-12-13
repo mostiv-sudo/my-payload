@@ -1,44 +1,60 @@
-export default async function Footer() {
+import Link from 'next/link'
+
+export default function Footer() {
   return (
-    <footer className="bg-neutral-primary-soft rounded-base shadow-xs  m-4">
-      <div className="w-full max-w-screen-xl mx-auto p-4 md:py-8">
-        <div className="sm:flex sm:items-center sm:justify-between">
-          <a href="/" className="flex items-center mb-4 sm:mb-0 space-x-3 rtl:space-x-reverse">
-            <span className="text-heading self-center text-2xl font-semibold whitespace-nowrap">
-              Аниме
-            </span>
-          </a>
-          <ul className="flex flex-wrap items-center mb-6 text-sm font-medium text-body sm:mb-0">
-            <li>
-              <a href="#" className="hover:underline me-4 md:me-6">
-                About
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:underline me-4 md:me-6">
-                Privacy Policy
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:underline me-4 md:me-6">
-                Licensing
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:underline">
-                Contact
-              </a>
-            </li>
-          </ul>
-        </div>
-        <hr className="my-6 border-default sm:mx-auto lg:my-8" />
-        <span className="block text-sm text-body sm:text-center">
-          © 2023{' '}
-          <a href="/" className="hover:underline">
+    <footer
+      className="
+        px-3 lg:container 
+        
+      "
+    >
+      <div
+        className=" px-8 py-8 lg:mb-6 mb-3 lg:mx-auto  rounded-2xl
+        border border-border/60
+        bg-background/70
+        backdrop-blur-md
+        supports-[backdrop-filter]:bg-background/60
+        shadow-sm"
+      >
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          {/* LOGO */}
+          <Link href="/" className="text-2xl font-bold text-foreground">
             Аниме
-          </a>
-          . All Rights Reserved.
-        </span>
+          </Link>
+
+          {/* NAV */}
+          <nav>
+            <ul className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <li>
+                <Link href="/anime" className="hover:text-foreground transition">
+                  Каталог
+                </Link>
+              </li>
+              <li>
+                <Link href="/film" className="hover:text-foreground transition">
+                  Фильмы
+                </Link>
+              </li>
+              <li>
+                <Link href="/tv" className="hover:text-foreground transition">
+                  Сериалы
+                </Link>
+              </li>
+              <li>
+                <Link href="/search" className="hover:text-foreground transition">
+                  Поиск
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
+
+        <hr className="my-6 border-border/60" />
+
+        {/* COPYRIGHT */}
+        <p className="text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Аниме. Все права защищены.
+        </p>
       </div>
     </footer>
   )

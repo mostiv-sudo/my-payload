@@ -22,25 +22,46 @@ export function MediaGrid({ items, showRating = true, limit = 24 }: Props) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-6 gap-6 min-h-[70vh]">
       {visibleItems.map((item) => (
-        <Link key={item.id} href={`/anime/${item.slug}`} className="group flex flex-col relative">
+        <Link
+          key={item.id}
+          href={`/anime/${item.slug}`}
+          className="
+            group relative flex flex-col
+            transition-transform duration-300 ease-out
+            hover:scale-[1.04]
+          "
+        >
           {/* POSTER */}
           <div className="relative w-full overflow-hidden rounded-2xl">
             <img
               src={item.poster || '/placeholder.jpg'}
               alt={item.title}
-              className="w-full h-64 object-cover transition group-hover:opacity-70"
+              className="
+                w-full h-64 object-cover
+                transition-all duration-300 ease-out
+                group-hover:scale-110 group-hover:opacity-80
+              "
             />
 
             {/* RATING */}
             {showRating && item.rating && (
-              <span className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full backdrop-blur">
+              <span
+                className="
+                  absolute top-2 left-2
+                  rounded-full px-2 py-1 text-xs
+                  bg-black/70 text-white
+                  backdrop-blur
+                "
+              >
                 ⭐ {item.rating}
               </span>
             )}
           </div>
 
           {/* TEXT */}
-          <h3 className="text-sm font-semibold mt-3 truncate">{item.title}</h3>
+          <h3 className="mt-3 text-sm font-semibold truncate transition-colors group-hover:text-primary">
+            {item.title}
+          </h3>
 
           <p className="text-xs text-muted-foreground">
             {item.type === 'movie' ? 'Фильм' : 'Сериал'}

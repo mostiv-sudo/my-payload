@@ -1,67 +1,218 @@
-# Payload Blank Template
+Отлично, я понял 👍
+Ниже — **отредактированная версия README под твой проект**, а не под «Blank Template».
+Я сохранил структуру, но описал **аниме-платформу, поиск, фронтенд, Payload CMS и v2.0.0**.
 
-This template comes configured with the bare minimum to get started on anything you need.
+Можешь **смело заменить README.md целиком**.
 
-## Quick start
+---
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+# Anime Platform — Payload + Next.js
 
-## Quick Start - local setup
+Современная платформа для просмотра и поиска аниме, фильмов и сериалов, построенная на **Payload CMS** и **Next.js (App Router)**.
 
-To spin up this template locally, follow these steps:
+Проект включает полноценный фронтенд, систему пользователей, поиск, каталог контента и административную панель.
 
-### Clone
+---
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+## 🚀 Основные возможности (v2.0.0)
 
-### Development
+* ⚡ Фронтенд на **Next.js 14 (App Router)**
+* 🎨 **Tailwind CSS + shadcn/ui**
+* 🔐 Аутентификация пользователей (регистрация / вход / выход)
+* 👤 Страницы аккаунта пользователя
+* 🔎 Поиск аниме с debounce и сохранением параметров в URL
+* 🎬 Каталоги:
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URI` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+  * Аниме
+  * Фильмы
+  * Сериалы
+* 🗂 Коллекции Payload CMS:
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+  * `Users`
+  * `Anime`
+  * `Genre`
+  * `Studios`
+* 🧠 Типизация Payload (`payload-types.ts`)
+* 🛠 Расширенная конфигурация Payload CMS
+* 🧪 Тесты поиска
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+---
 
-#### Docker (Optional)
+## 🧩 Технологии
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+* **Next.js**
+* **Payload CMS**
+* **MongoDB**
+* **Tailwind CSS**
+* **shadcn/ui**
+* **pnpm**
+* **TypeScript**
 
-To do so, follow these steps:
+---
 
-- Modify the `MONGODB_URI` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URI` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+## ⚡ Быстрый старт (локально)
 
-## How it works
+### 1. Клонирование репозитория
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+```bash
+git clone <repo-url>
+cd <project-name>
+```
 
-### Collections
+---
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+### 2. Переменные окружения
 
-- #### Users (Authentication)
+```bash
+cp .env.example .env
+```
 
-  Users are auth-enabled collections that have access to the admin panel.
+Укажи:
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+* `MONGODB_URI`
+* `PAYLOAD_SECRET`
+* `NEXT_PUBLIC_PAYLOAD_URL`
 
-- #### Media
+---
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+### 3. Установка зависимостей и запуск
 
-### Docker
+```bash
+pnpm install
+pnpm dev
+```
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+Открой в браузере:
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+```
+http://localhost:3000
+```
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+---
 
-## Questions
+### 4. Админ-панель Payload
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+После запуска:
+
+* Перейди в `/admin`
+* Создай первого администратора
+* Управляй аниме, жанрами, студиями и пользователями
+
+---
+
+## 🔍 Поиск
+
+Реализован умный поиск по аниме:
+
+* debounce (задержка ввода)
+* пагинация
+* сохранение параметров в URL
+* мгновенная навигация без перезагрузки страницы
+
+Путь:
+
+```
+/search?q=naruto&page=1
+```
+
+---
+
+## 🗂 Коллекции Payload
+
+### Users
+
+* Аутентификация
+* Email-верификация
+* Роли и доступ
+
+### Anime
+
+* Название
+* Постер
+* Год
+* Связь с жанрами и студиями
+
+### Genre
+
+* Жанры аниме
+
+### Studios
+
+* Анимационные студии
+
+---
+
+## 🐳 Docker (опционально)
+
+Для локальной разработки через Docker:
+
+1. В `.env`:
+
+   ```env
+   MONGODB_URI=mongodb://127.0.0.1/<dbname>
+   ```
+2. В `docker-compose.yml`:
+
+   ```env
+   MONGODB_URI=mongodb://mongo/<dbname>
+   ```
+3. Запуск:
+
+   ```bash
+   docker-compose up
+   ```
+
+---
+
+## 📦 Структура проекта
+
+```
+src/
+ ├─ app/
+ │   ├─ (frontend)/
+ │   ├─ (payload)/
+ ├─ collections/
+ │   ├─ Anime/
+ │   ├─ Genre.ts
+ │   ├─ Studios.ts
+ │   └─ Users.ts
+ ├─ components/
+ ├─ utilities/
+ └─ payload.config.ts
+```
+
+---
+
+## 🧪 Тесты
+
+* Поиск покрыт тестами
+* Расположены в `tests/`
+
+---
+
+## 📌 Планы
+
+* ⭐ Избранное
+* 💬 Комментарии
+* 🌍 Локализация
+* 📈 Рейтинг и просмотры
+
+---
+
+## 💬 Поддержка
+
+Если возникнут вопросы или идеи:
+
+* Payload Discord — [https://discord.com/invite/payload](https://discord.com/invite/payload)
+* GitHub Discussions — [https://github.com/payloadcms/payload/discussions](https://github.com/payloadcms/payload/discussions)
+
+---
+
+Если хочешь — могу:
+
+* сделать **CHANGELOG.md**
+* оформить **README под GitHub Stars**
+* добавить **бейджи**
+* адаптировать под **open-source релиз**
+
+Просто скажи 💪

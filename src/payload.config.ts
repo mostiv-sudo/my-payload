@@ -16,6 +16,7 @@ import { Genres } from './collections/Genre'
 import { Studios } from './collections/Studios'
 import { seed } from './endpoint/import-anime'
 import { searchPlugin } from '@payloadcms/plugin-search'
+import { seedExternal } from './endpoint/seed.external'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -31,6 +32,9 @@ export default buildConfig({
   onInit: async (payload) => {
     if (process.env.SEED === 'true') {
       await seed(payload)
+    }
+    if (process.env.SEED === 'external') {
+      await seedExternal(payload)
     }
   },
 
@@ -64,25 +68,34 @@ export default buildConfig({
       collections: ['anime'],
 
       // ✅ ТОЛЬКО поля
+      // поля для поиска и индекса
       searchOverrides: {
         fields: ({ defaultFields }) => [
           ...defaultFields,
           {
             name: 'searchTitle',
             type: 'text',
-            admin: {
-              readOnly: true,
-            },
+            admin: { readOnly: true },
           },
           {
             name: 'slug',
             type: 'text',
             admin: { readOnly: true },
           },
+          {
+            name: 'type',
+            type: 'text', // select нельзя, поэтому как text
+            admin: { readOnly: true },
+          },
+          {
+            name: 'year',
+            type: 'number',
+            admin: { readOnly: true },
+          },
         ],
       },
 
-      // ✅ beforeSync ВОТ ЗДЕСЬ
+      // перед сохранением в индекс
       beforeSync: ({ originalDoc, searchDoc }) => {
         if (searchDoc.doc.relationTo === 'anime') {
           const normalize = (str = '') =>
@@ -102,6 +115,8 @@ export default buildConfig({
               .filter(Boolean)
               .join(' '),
             slug: originalDoc.slug,
+            type: originalDoc.type, // добавляем type
+            year: originalDoc.year, // добавляем year
           }
         }
 

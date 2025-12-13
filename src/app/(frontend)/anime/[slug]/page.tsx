@@ -5,6 +5,51 @@ import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
+import { Metadata } from 'next'
+
+const statusMap: Record<string, string> = {
+  announced: 'Анонс',
+  airing: 'Выходит',
+  completed: 'Завершено',
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params // ✅ нужно await
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime?where[slug][equals]=${slug}`,
+    { cache: 'no-store' },
+  )
+  const data = await res.json()
+  const anime = data?.docs?.[0]
+
+  if (!anime) return {}
+  // 🔹 добавляем metadataBase
+  const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+
+  return {
+    title: anime.title,
+    description:
+      anime.description ||
+      `Смотрите ${anime.type === 'movie' ? 'фильм' : 'сериал'} ${anime.title_en || ''}`,
+    metadataBase, // ✅ здесь
+    openGraph: {
+      title: anime.title,
+      description: anime.description || '',
+      images: [
+        {
+          url: anime.poster || '/placeholder.jpg',
+          width: 800,
+          height: 600,
+        },
+      ],
+    },
+  }
+}
+
 async function getAnime(slug: string) {
   try {
     const res = await fetch(
@@ -83,7 +128,7 @@ export default async function AnimeDetailsPage({ params }: Args) {
               <span>•</span>
               <span>{anime.type === 'movie' ? 'Фильм' : 'Сериал'}</span>
               <span>•</span>
-              <span>{anime.status || '—'}</span>
+              <span>{anime.status ? statusMap[anime.status] : '—'}</span>
 
               {anime.type === 'movie' && anime.duration && (
                 <>

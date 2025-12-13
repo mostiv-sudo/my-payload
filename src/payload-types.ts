@@ -187,6 +187,7 @@ export interface Anime {
     shikimori?: string | null;
     kodik?: string | null;
     worldart?: string | null;
+    external_export_id?: string | null;
   };
   type: 'movie' | 'series';
   genres?: (number | Genre)[] | null;
@@ -255,6 +256,8 @@ export interface Search {
   };
   searchTitle?: string | null;
   slug?: string | null;
+  type?: string | null;
+  year?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -409,6 +412,7 @@ export interface AnimeSelect<T extends boolean = true> {
         shikimori?: T;
         kodik?: T;
         worldart?: T;
+        external_export_id?: T;
       };
   type?: T;
   genres?: T;
@@ -460,6 +464,8 @@ export interface SearchSelect<T extends boolean = true> {
   doc?: T;
   searchTitle?: T;
   slug?: T;
+  type?: T;
+  year?: T;
   updatedAt?: T;
   createdAt?: T;
 }

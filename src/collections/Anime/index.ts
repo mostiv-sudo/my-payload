@@ -36,6 +36,7 @@ export const Anime: CollectionConfig = {
               name: 'title_en',
               type: 'text',
               required: true,
+              unique: true,
               label: 'Название (EN)',
             },
             {
@@ -60,6 +61,7 @@ export const Anime: CollectionConfig = {
               name: 'rating',
               type: 'number',
               label: 'Оценка',
+              defaultValue: 0,
             },
           ],
         },
@@ -77,6 +79,7 @@ export const Anime: CollectionConfig = {
                 { name: 'shikimori', label: 'Shikimori', type: 'text' },
                 { name: 'kodik', label: 'Kodik', type: 'text' },
                 { name: 'worldart', label: 'WorldArt', type: 'text' },
+                { name: 'external_export_id', label: 'Экспорт', type: 'text' },
               ],
             },
           ],

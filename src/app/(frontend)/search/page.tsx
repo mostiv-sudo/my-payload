@@ -16,7 +16,7 @@ type SearchDoc = {
   slug: string
   searchTitle: string
   poster?: string
-  type?: 'movie' | 'series'
+  type: 'movie' | 'series'
   year?: number
 }
 
@@ -63,7 +63,7 @@ export default function SearchPage() {
       )
 
       const json = await res.json()
-
+      console.log(json)
       const mapped: MediaItem[] = json.docs.map((item: SearchDoc) => ({
         id: item.id,
         slug: item.slug,
@@ -147,6 +147,7 @@ export default function SearchPage() {
           )}
 
           {/* RESULTS */}
+
           {items.length > 0 && (
             <>
               <Separator />

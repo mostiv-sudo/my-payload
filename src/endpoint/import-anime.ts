@@ -5,7 +5,11 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-/** Простая генерация slug */
+/* -----------------------------------------------------
+   Утилиты
+----------------------------------------------------- */
+
+/** Простейший slug */
 function makeSlug(str: string): string {
   return String(str)
     .trim()
@@ -15,10 +19,10 @@ function makeSlug(str: string): string {
     .replace(/--+/g, '-')
 }
 
-/** Уникальный slug (если есть дубли) */
-async function getUniqueSlug(payload: Payload, base: string) {
+/** Уникальный slug */
+async function getUniqueSlug(payload: Payload, base: string): Promise<string> {
   let slug = makeSlug(base)
-  let suffix = 1
+  let i = 1
 
   while (true) {
     const exists = await payload.find({
@@ -29,18 +33,18 @@ async function getUniqueSlug(payload: Payload, base: string) {
 
     if (exists.totalDocs === 0) return slug
 
-    slug = `${makeSlug(base)}-${suffix++}`
+    slug = `${makeSlug(base)}-${i++}`
   }
 }
 
-/** Определяем тип */
+/** Тип: фильм / сериал */
 function mapType(type: any): 'movie' | 'series' {
   if (!type) return 'movie'
   const t = String(type).toLowerCase()
   return t.includes('serial') || t.includes('series') || t.includes('tv') ? 'series' : 'movie'
 }
 
-/** Определяем статус */
+/** Статус */
 function mapStatus(status: any): 'announced' | 'airing' | 'completed' {
   if (!status) return 'announced'
   const s = String(status).toLowerCase()
@@ -49,17 +53,19 @@ function mapStatus(status: any): 'announced' | 'airing' | 'completed' {
   return 'announced'
 }
 
-/** JSON → формат коллекции */
+/* -----------------------------------------------------
+   Маппинг JSON → Payload
+----------------------------------------------------- */
+
 function mapAnime(item: any) {
   const type = mapType(item.type)
 
   return {
     title: item.title,
-    title_en: item.enTitle,
+    title_en: item.enTitle || item.title,
     year: item.year ?? null,
     description: item.description || '',
-    rating: item.shikimori_rating ?? null,
-    slug: item.enTitle,
+    rating: item.shikimori_rating ?? 0,
 
     type,
 
@@ -71,15 +77,20 @@ function mapAnime(item: any) {
     relesed: item.released_at ?? null,
 
     external_ids: {
-      kinopoisk: '',
-      imdb: '',
-      worldart: '',
+      kinopoisk: item.kinopoisk_id ?? '',
+      imdb: item.imdb_id ?? '',
+      worldart: item.worldart_id ?? '',
+      external_export_id: String(item.id), // 🔥 ГЛАВНОЕ
     },
   }
 }
 
+/* -----------------------------------------------------
+   SEED
+----------------------------------------------------- */
+
 export const seed = async (payload: Payload) => {
-  const filePath = path.join(process.cwd(), 'src/endpoint/tv.json')
+  const filePath = path.join(process.cwd(), 'src/endpoint/film.json')
   const raw = fs.readFileSync(filePath, 'utf8')
   const data = JSON.parse(raw)
 
@@ -88,36 +99,53 @@ export const seed = async (payload: Payload) => {
   for (const item of data) {
     const anime = mapAnime(item)
 
-    // Если нет title_en — делаем фейковый
+    // fallback
     if (!anime.title_en) {
       anime.title_en = anime.title
     }
 
-    // Пропуск дублей по title_en
+    // ищем по UNIQUE title_en
     const existing = await payload.find({
       collection: 'anime',
-      where: { title_en: { equals: anime.title_en } },
+      where: {
+        title_en: {
+          equals: anime.title_en,
+        },
+      },
       limit: 1,
     })
 
-    if (existing.totalDocs > 0) {
-      console.log(`⚠ Пропуск (дубликат): ${anime.title_en}`)
+    if (existing.docs.length > 0) {
+      const existingDoc = existing.docs[0]
+
+      // обновляем существующую запись
+      await payload.update({
+        collection: 'anime',
+        id: existingDoc.id,
+        data: {
+          ...anime,
+          slug: existingDoc.slug, // slug НЕ трогаем
+        },
+      })
+
+      console.log(`🔁 Обновлено: ${anime.title_en}`)
       continue
     }
 
-    // Генерируем уникальный slug
+    // если записи нет — создаём
     const slug = await getUniqueSlug(payload, anime.title_en)
-    anime.slug = slug
 
     await payload.create({
       collection: 'anime',
-      data: anime,
-      draft: false,
+      data: {
+        ...anime,
+        slug,
+      },
     })
 
-    console.log(`✅ Добавлено: ${anime.title} (slug: ${slug})`)
+    console.log(`✅ Добавлено: ${anime.title_en} (slug: ${slug})`)
   }
 
   console.log('\n🎉 Импорт завершён.')
-  process.exit()
+  process.exit(0)
 }

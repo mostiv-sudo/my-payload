@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-
 import { Metadata } from 'next'
+import { EpisodesList } from '@/components/anime/EpisodesList'
+import { EpisodesSlider } from '@/components/anime/EpisodesSlider'
 
 const statusMap: Record<string, string> = {
   announced: 'Анонс',
@@ -13,29 +13,79 @@ const statusMap: Record<string, string> = {
   completed: 'Завершено',
 }
 
+type Genre = {
+  id: number
+  title: string
+  slug: string
+}
+
+type Anime = {
+  id: number
+  title: string
+  title_en?: string
+  poster?: string
+  rating?: number
+  year?: number
+  type: 'movie' | 'series'
+  status?: string
+  duration?: number
+  episodesCount?: number
+  seasonsCount?: number
+  description?: string
+  genres?: (number | Genre)[]
+}
+
+async function getAnime(slug: string): Promise<Anime | null> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime?where[slug][equals]=${slug}&depth=1`,
+      { cache: 'no-store' },
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    return data?.docs?.[0] || null
+  } catch (err) {
+    console.error('Failed to fetch anime:', err)
+    return null
+  }
+}
+
+function extractGenreIds(genres: (number | Genre)[]): number[] {
+  return genres
+    .map((g) => (typeof g === 'number' ? g : g?.id))
+    .filter((id): id is number => Boolean(id))
+}
+
+async function getGenresByIds(ids: number[]): Promise<Genre[]> {
+  if (!ids?.length) return []
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/genres?where[id][in]=${ids.join(',')}`,
+      { cache: 'no-store' },
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.docs || []
+  } catch {
+    return []
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { slug } = await params // ✅ нужно await
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime?where[slug][equals]=${slug}`,
-    { cache: 'no-store' },
-  )
-  const data = await res.json()
-  const anime = data?.docs?.[0]
-
+  const { slug } = await params
+  const anime = await getAnime(slug)
   if (!anime) return {}
-  // 🔹 добавляем metadataBase
   const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
-
   return {
     title: anime.title,
     description:
       anime.description ||
       `Смотрите ${anime.type === 'movie' ? 'фильм' : 'сериал'} ${anime.title_en || ''}`,
-    metadataBase, // ✅ здесь
+    metadataBase,
     openGraph: {
       title: anime.title,
       description: anime.description || '',
@@ -50,23 +100,6 @@ export async function generateMetadata({
   }
 }
 
-async function getAnime(slug: string) {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime?where[slug][equals]=${slug}`,
-      { cache: 'no-store' },
-    )
-
-    if (!res.ok) return null
-    const data = await res.json()
-    if (!data?.docs?.length) return null
-
-    return data.docs[0]
-  } catch {
-    return null
-  }
-}
-
 type Args = {
   params: Promise<{ slug: string }>
 }
@@ -74,26 +107,15 @@ type Args = {
 export default async function AnimeDetailsPage({ params }: Args) {
   const { slug } = await params
   const anime = await getAnime(slug)
-
   if (!anime) return notFound()
+  const genreIds = extractGenreIds(anime.genres || [])
+  const genres = await getGenresByIds(genreIds)
 
   return (
-    <div className="container mx-auto py-8 mt-20">
-      {/* CARD */}
-      <Card
-        className="
-          relative overflow-hidden rounded-3xl
-          border border-border/60
-          bg-background/80 dark:bg-background/50
-          backdrop-blur-md
-          supports-[backdrop-filter]:bg-background/60
-          dark:supports-[backdrop-filter]:bg-background/40
-          shadow-sm dark:shadow-black/20
-          hover:shadow-md transition-all
-        "
-      >
+    <div className="lg:container mx-auto px-4 py-8 mt-20 space-y-8">
+      {/* Основной блок с постером и информацией */}
+      <Card className="relative overflow-hidden rounded-3xl border border-border/60 bg-background/80 dark:bg-background/50 backdrop-blur-md shadow-sm dark:shadow-black/20 hover:shadow-md transition-all">
         <CardContent className="flex flex-col lg:flex-row gap-8 p-6 lg:p-10">
-          {/* POSTER */}
           <div className="w-full lg:w-1/3 max-w-sm mx-auto">
             <Image
               src={anime.poster || '/placeholder.jpg'}
@@ -104,9 +126,7 @@ export default async function AnimeDetailsPage({ params }: Args) {
             />
           </div>
 
-          {/* CONTENT */}
           <div className="flex-1 space-y-5 text-foreground">
-            {/* TITLE */}
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold">{anime.title}</h1>
               {anime.title_en && (
@@ -114,7 +134,6 @@ export default async function AnimeDetailsPage({ params }: Args) {
               )}
             </div>
 
-            {/* RATING */}
             {anime.rating && (
               <div className="flex items-center gap-3">
                 <div className="text-4xl font-black text-yellow-400">{anime.rating}</div>
@@ -122,7 +141,6 @@ export default async function AnimeDetailsPage({ params }: Args) {
               </div>
             )}
 
-            {/* INFO */}
             <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
               <span>{anime.year || '—'} год</span>
               <span>•</span>
@@ -155,46 +173,44 @@ export default async function AnimeDetailsPage({ params }: Args) {
               )}
             </div>
 
-            {/* ACTIONS */}
-            <div className="flex gap-3 pt-2">
+            {/* Жанры */}
+            {genres.length > 0 && (
+              <div className="pt-2 flex flex-wrap gap-2">
+                {genres.map((genre) => (
+                  <Link
+                    key={genre.slug}
+                    href={`/genre/${genre.slug}`}
+                    className="px-3 py-1 text-sm rounded-full border border-border/60 bg-background/60 backdrop-blur hover:bg-primary hover:text-primary-foreground transition"
+                  >
+                    {genre.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Действия */}
+            <div className="flex flex-wrap gap-3 pt-4">
               <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold">
                 Смотреть
               </Button>
-
               <Button variant="outline">Трейлер</Button>
             </div>
 
-            {/* DESCRIPTION */}
+            {/* Описание */}
             <div className="pt-4">
               <h2 className="text-xl font-semibold mb-2">Описание</h2>
               <p className="text-muted-foreground leading-relaxed">
                 {anime.description || 'Описание отсутствует.'}
               </p>
             </div>
-
-            {/* TAGS */}
-            <div className="pt-4 flex flex-wrap gap-2">
-              <span className="px-3 py-1 text-sm rounded-full border bg-muted text-foreground">
-                {anime.type === 'movie' ? 'Фильм' : 'Сериал'}
-              </span>
-
-              {anime.year && (
-                <span className="px-3 py-1 text-sm rounded-full border bg-muted text-foreground">
-                  {anime.year}
-                </span>
-              )}
-
-              {anime.rating && (
-                <span className="px-3 py-1 text-sm rounded-full bg-yellow-500 text-black font-medium">
-                  ⭐ {anime.rating}
-                </span>
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* BACK */}
+      {/* Эпизоды для сериалов */}
+      {anime.type === 'series' && anime.id && <EpisodesSlider animeId={anime.id} />}
+
+      {/* Ссылка назад */}
       <Link
         href="/anime"
         className="inline-flex items-center text-sm mt-4 text-muted-foreground hover:text-foreground"

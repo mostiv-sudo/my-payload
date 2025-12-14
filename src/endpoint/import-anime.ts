@@ -79,7 +79,6 @@ function mapAnime(item: any) {
     external_ids: {
       kinopoisk: item.kinopoisk_id ?? '',
       imdb: item.imdb_id ?? '',
-      worldart: item.worldart_id ?? '',
       external_export_id: String(item.id), // 🔥 ГЛАВНОЕ
     },
   }

@@ -78,7 +78,6 @@ export const Anime: CollectionConfig = {
                 { name: 'imdb', label: 'IMDB', type: 'text' },
                 { name: 'shikimori', label: 'Shikimori', type: 'text' },
                 { name: 'kodik', label: 'Kodik', type: 'text' },
-                { name: 'worldart', label: 'WorldArt', type: 'text' },
                 { name: 'external_export_id', label: 'Экспорт', type: 'text' },
               ],
             },

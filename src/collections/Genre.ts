@@ -4,14 +4,26 @@ import { slugField } from 'payload'
 export const Genres: CollectionConfig = {
   slug: 'genres',
   admin: {
-    useAsTitle: 'name',
+    useAsTitle: 'title',
+  },
+  access: {
+    read: () => true, // ✅ публичный доступ для чтения
+    create: () => false,
+    update: () => false,
+    delete: () => false,
   },
   fields: [
     {
-      name: 'name',
+      name: 'title',
       type: 'text',
       required: true,
       label: 'Название жанра',
+    },
+    {
+      name: 'title_en',
+      type: 'text',
+      required: true,
+      label: 'Название жанра en',
     },
 
     {
@@ -20,6 +32,6 @@ export const Genres: CollectionConfig = {
       label: 'Описание',
     },
 
-    slugField(),
+    slugField({ fieldToUse: 'title_en' }),
   ],
 }

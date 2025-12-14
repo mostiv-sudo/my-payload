@@ -72,6 +72,7 @@ export interface Config {
     anime: Anime;
     genres: Genre;
     studios: Studio;
+    episodes: Episode;
     search: Search;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -85,6 +86,7 @@ export interface Config {
     anime: AnimeSelect<false> | AnimeSelect<true>;
     genres: GenresSelect<false> | GenresSelect<true>;
     studios: StudiosSelect<false> | StudiosSelect<true>;
+    episodes: EpisodesSelect<false> | EpisodesSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -211,7 +213,8 @@ export interface Anime {
  */
 export interface Genre {
   id: number;
-  name: string;
+  title: string;
+  title_en: string;
   description?: string | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -232,6 +235,34 @@ export interface Studio {
   founded?: number | null;
   description?: string | null;
   logo?: (number | null) | Media;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "episodes".
+ */
+export interface Episode {
+  id: number;
+  anime: number | Anime;
+  /**
+   * Номер сезона, к которому принадлежит эпизод
+   */
+  season: number;
+  episodeNumber: number;
+  title: string;
+  description?: string | null;
+  released?: string | null;
+  duration?: number | null;
+  /**
+   * Прямая ссылка на эпизод с Kodik API
+   */
+  videoLink?: string | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -304,6 +335,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'studios';
         value: number | Studio;
+      } | null)
+    | ({
+        relationTo: 'episodes';
+        value: number | Episode;
       } | null)
     | ({
         relationTo: 'search';
@@ -432,7 +467,8 @@ export interface AnimeSelect<T extends boolean = true> {
  * via the `definition` "genres_select".
  */
 export interface GenresSelect<T extends boolean = true> {
-  name?: T;
+  title?: T;
+  title_en?: T;
   description?: T;
   generateSlug?: T;
   slug?: T;
@@ -449,6 +485,24 @@ export interface StudiosSelect<T extends boolean = true> {
   founded?: T;
   description?: T;
   logo?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "episodes_select".
+ */
+export interface EpisodesSelect<T extends boolean = true> {
+  anime?: T;
+  season?: T;
+  episodeNumber?: T;
+  title?: T;
+  description?: T;
+  released?: T;
+  duration?: T;
+  videoLink?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;

@@ -8,7 +8,6 @@ type ExternalItem = {
   shikimori_id?: string | null
   kinopoisk_id?: string | null
   imdb_id?: string | null
-  worldart_id?: string | null
 }
 
 export const seedExternal = async (payload: Payload) => {
@@ -52,7 +51,6 @@ export const seedExternal = async (payload: Payload) => {
           shikimori: item.shikimori_id ?? null,
           kinopoisk: item.kinopoisk_id ?? null,
           imdb: item.imdb_id ?? null,
-          worldart: item.worldart_id ?? null,
         },
       },
     })

@@ -113,7 +113,7 @@ export default function Header() {
                   <h2 className="text-xl mb-4">Аккаунт</h2>
                   <ul className="flex flex-col gap-3">
                     <li>
-                      <Link href="/profile">Профиль</Link>
+                      <Link href="/account">Профиль</Link>
                     </li>
                     <li>
                       <Link href="/logout">Выйти</Link>

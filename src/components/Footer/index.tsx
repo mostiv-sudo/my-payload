@@ -14,7 +14,8 @@ export default function Footer() {
         bg-background/70
         backdrop-blur-md
         supports-[backdrop-filter]:bg-background/60
-        shadow-sm"
+        shadow-sm
+        hover:shadow-md"
       >
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           {/* LOGO */}

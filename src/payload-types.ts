@@ -179,6 +179,7 @@ export interface Anime {
   id: number;
   title: string;
   title_en: string;
+  play_link?: string | null;
   year?: number | null;
   description?: string | null;
   poster?: (number | null) | Media;
@@ -188,7 +189,6 @@ export interface Anime {
     imdb?: string | null;
     shikimori?: string | null;
     kodik?: string | null;
-    worldart?: string | null;
     external_export_id?: string | null;
   };
   type: 'movie' | 'series';
@@ -197,6 +197,8 @@ export interface Anime {
   duration?: number | null;
   seasonsCount?: number | null;
   episodesCount?: number | null;
+  minimal_age?: number | null;
+  rating_mpaa?: string | null;
   status?: ('announced' | 'airing' | 'completed') | null;
   relesed?: string | null;
   /**
@@ -435,6 +437,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface AnimeSelect<T extends boolean = true> {
   title?: T;
   title_en?: T;
+  play_link?: T;
   year?: T;
   description?: T;
   poster?: T;
@@ -446,7 +449,6 @@ export interface AnimeSelect<T extends boolean = true> {
         imdb?: T;
         shikimori?: T;
         kodik?: T;
-        worldart?: T;
         external_export_id?: T;
       };
   type?: T;
@@ -455,6 +457,8 @@ export interface AnimeSelect<T extends boolean = true> {
   duration?: T;
   seasonsCount?: T;
   episodesCount?: T;
+  minimal_age?: T;
+  rating_mpaa?: T;
   status?: T;
   relesed?: T;
   generateSlug?: T;

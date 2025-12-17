@@ -14,13 +14,9 @@ import { ru } from './languages/ru'
 import { Anime } from './collections/Anime'
 import { Genres } from './collections/Genre'
 import { Studios } from './collections/Studios'
-import { seed } from './endpoint/import-anime'
 import { searchPlugin } from '@payloadcms/plugin-search'
-import { seedExternal } from './endpoint/seed.external'
-import { seedGenres } from './endpoint/seed.genres'
-import { seedAddGenreAnime } from './endpoint/seed.addGenres'
 import { Episodes } from './collections/Episodes'
-import { seedEpisodes } from './endpoint/seed.addEpisodes'
+import { seed } from './endpoint'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -34,20 +30,8 @@ export default buildConfig({
   },
 
   onInit: async (payload) => {
-    if (process.env.SEED === 'true') {
+    if (process.env.SEED === 'full') {
       await seed(payload)
-    }
-    if (process.env.SEED === 'external') {
-      await seedExternal(payload)
-    }
-    if (process.env.SEED === 'genres') {
-      await seedGenres(payload)
-    }
-    if (process.env.SEED === 'add-genres') {
-      await seedAddGenreAnime(payload)
-    }
-    if (process.env.SEED === 'add-episode') {
-      await seedEpisodes(payload)
     }
   },
 

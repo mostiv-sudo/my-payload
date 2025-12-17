@@ -40,6 +40,12 @@ export const Anime: CollectionConfig = {
               label: 'Название (EN)',
             },
             {
+              name: 'play_link',
+              type: 'text',
+              unique: true,
+              label: 'Ссылка на видио',
+            },
+            {
               name: 'year',
               type: 'number',
               label: 'Год',
@@ -134,6 +140,16 @@ export const Anime: CollectionConfig = {
               admin: {
                 condition: (_, data) => data.type === 'series',
               },
+            },
+            {
+              name: 'minimal_age',
+              type: 'number',
+              label: 'Минимальный возраст',
+            },
+            {
+              name: 'rating_mpaa',
+              type: 'text',
+              label: 'Рейтинг MPAA',
             },
           ],
         },

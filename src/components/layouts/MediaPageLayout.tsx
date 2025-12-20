@@ -1,7 +1,6 @@
-// components/layouts/MediaPageLayout.tsx
 'use client'
 
-import { ReactNode } from 'react'
+import { useState, useEffect } from 'react'
 import { FilterSidebar } from '@/components/filters/FilterSidebar'
 import { SortSelect } from '@/components/filters/SortSelect'
 import { MediaGrid } from '@/components/MediaGrid'
@@ -30,6 +29,21 @@ export function MediaPageLayout({
   showRating,
   type,
 }: Props) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [displayItems, setDisplayItems] = useState(items)
+
+  // Обновление элементов при смене сортировки
+  useEffect(() => {
+    setIsLoading(true)
+
+    const timeout = setTimeout(() => {
+      setDisplayItems(items)
+      setIsLoading(false)
+    }, 400) // небольшая задержка для плавного эффекта
+
+    return () => clearTimeout(timeout)
+  }, [items])
+
   return (
     <div className="container mx-auto py-10 min-h-[70vh]">
       <div className="flex flex-col md:flex-row gap-6">
@@ -43,7 +57,12 @@ export function MediaPageLayout({
             <SortSelect basePath={basePath} value={sort} />
           </header>
 
-          <MediaGrid items={items} showRating={showRating} />
+          <MediaGrid
+            items={displayItems}
+            showRating={showRating}
+            isLoading={isLoading}
+            limit={limit}
+          />
 
           {totalPages > 1 && (
             <div className="flex justify-center pt-4">

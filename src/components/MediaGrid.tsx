@@ -20,7 +20,7 @@ export function MediaGrid({ items, showRating = true, limit = 24 }: Props) {
   const visibleItems = items.slice(0, limit)
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-6 min-h-[70vh]">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-6 min-h-[70vh]">
       {visibleItems.map((item) => (
         <Link
           key={item.id}

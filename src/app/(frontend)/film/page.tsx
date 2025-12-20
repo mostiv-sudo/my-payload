@@ -1,11 +1,8 @@
-import { getAnimeByType } from '@/lib/getAnimeByType'
-import { MediaGrid } from '@/components/MediaGrid'
-import { Pagination } from '@/components/Pagination'
-
-type SearchParams = {
-  page?: string
-  limit?: string
-}
+// app/film/page.tsx
+import { getMedia, resolveGenreIds } from '@/lib/getMedia'
+import { MediaPageLayout } from '@/components/layouts/MediaPageLayout'
+import { toNumber, parseGenres } from '@/lib/query'
+import type { SearchParams } from '@/lib/types'
 
 export default async function MoviesPage({
   searchParams,
@@ -14,23 +11,33 @@ export default async function MoviesPage({
 }) {
   const params = await searchParams
 
-  const page = Math.max(1, Number(params.page) || 1)
-  const limit = Math.max(1, Number(params.limit) || 24)
+  const sort = params.sort ?? 'rating_desc'
+  const page = toNumber(params.page, 1)
+  const limit = toNumber(params.limit, 24)
 
-  const { items, totalPages } = await getAnimeByType({
-    type: 'movie',
-    page,
-    limit,
-  })
+  const genreSlugs = parseGenres(params.genre)
+  const genreIds = await resolveGenreIds(genreSlugs)
+
+  const filters = {
+    type: 'movie' as const,
+    genres: genreIds.map(String),
+    age: params.age ? Number(params.age) : undefined,
+    status: params.status,
+  }
+
+  const { items, totalPages } = await getMedia('anime', { page, limit, sort, filters })
 
   return (
-    <div className="container mx-auto py-10 min-h-[70vh]">
-      <h1 className="text-3xl font-bold mb-6">Фильмы</h1>
-
-      {/* ⭐ рейтинг включён */}
-      <MediaGrid items={items} showRating />
-
-      <Pagination page={page} totalPages={totalPages} limit={limit} />
-    </div>
+    <MediaPageLayout
+      title="Фильмы"
+      basePath="/film"
+      items={items}
+      page={page}
+      totalPages={totalPages}
+      limit={limit}
+      sort={sort}
+      showRating
+      type="movie"
+    />
   )
 }

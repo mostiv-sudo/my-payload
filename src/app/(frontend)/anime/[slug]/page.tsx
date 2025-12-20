@@ -33,6 +33,7 @@ type Anime = {
   seasonsCount?: number
   description?: string
   genres?: (number | Genre)[]
+  minimal_age: number
 }
 
 async function getAnime(slug: string): Promise<Anime | null> {
@@ -147,6 +148,13 @@ export default async function AnimeDetailsPage({ params }: Args) {
               <span>{anime.type === 'movie' ? 'Фильм' : 'Сериал'}</span>
               <span>•</span>
               <span>{anime.status ? statusMap[anime.status] : '—'}</span>
+              {/* Возрастное ограничение */}
+              {anime.minimal_age !== undefined && (
+                <>
+                  <span>•</span>
+                  <span>{anime.minimal_age}+</span>
+                </>
+              )}
 
               {anime.type === 'movie' && anime.duration && (
                 <>

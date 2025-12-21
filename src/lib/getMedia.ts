@@ -1,3 +1,4 @@
+// lib/getMedia.ts
 import { MediaFilters, SortType } from './types'
 
 type Params = {
@@ -7,10 +8,8 @@ type Params = {
   filters?: MediaFilters
 }
 
-/**
- * Преобразует slug жанров в их числовые ID через Payload API
- */
-async function resolveGenreIds(slugs: string[]): Promise<number[]> {
+/** Преобразует slug жанров в их числовые ID через Payload API */
+export async function resolveGenreIds(slugs: string[]): Promise<number[]> {
   if (!slugs.length) return []
 
   const url = new URL(`${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/genres`)
@@ -26,8 +25,9 @@ async function resolveGenreIds(slugs: string[]): Promise<number[]> {
   return Array.isArray(data.docs) ? data.docs.map((d: any) => d.id) : []
 }
 
+/** Работает только с существующими коллекциями */
 export async function getMedia(
-  endpoint: 'anime' | 'films' | 'tv',
+  endpoint: 'anime', // оставляем только anime
   { page, limit, sort, filters }: Params,
 ) {
   const params = new URLSearchParams()
@@ -38,39 +38,30 @@ export async function getMedia(
     year_desc: '-year',
     year_asc: 'year',
   }
-  params.set('sort', sortMap[sort] ?? '-rating')
+
+  params.set('sort', sortMap[sort])
   params.set('page', String(page))
   params.set('limit', String(limit))
 
   if (filters) {
-    // Фильтруем жанры через их ID
-    if (Array.isArray(filters.genres) && filters.genres.length) {
-      params.set('where[genres][in]', filters.genres.join(','))
-    }
-    if (typeof filters.age === 'number') {
+    if (filters.genres?.length) params.set('where[genres][in]', filters.genres.join(','))
+    if (filters.age !== undefined)
       params.set('where[minimal_age][less_than_equal]', String(filters.age))
-    }
     if (filters.status) params.set('where[status][equals]', filters.status)
     if (filters.type) params.set('where[type][equals]', filters.type)
   }
 
   const url = `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/${endpoint}?${params.toString()}`
 
-  try {
-    const res = await fetch(url, { cache: 'no-store' })
-    if (!res.ok) {
-      const text = await res.text()
-      throw new Error(`Ошибка загрузки данных: ${res.status} ${res.statusText}. Response: ${text}`)
-    }
-    const data = await res.json()
-    return {
-      items: Array.isArray(data.docs) ? data.docs : [],
-      totalPages: typeof data.totalPages === 'number' ? data.totalPages : 1,
-    }
-  } catch (err) {
-    console.error('getMedia error:', err)
-    throw err
+  const res = await fetch(url, { cache: 'no-store' })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Ошибка загрузки данных: ${res.status} ${res.statusText}. Response: ${text}`)
+  }
+
+  const data = await res.json()
+  return {
+    items: Array.isArray(data.docs) ? data.docs : [],
+    totalPages: typeof data.totalPages === 'number' ? data.totalPages : 1,
   }
 }
-
-export { resolveGenreIds }

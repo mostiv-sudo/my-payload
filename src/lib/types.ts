@@ -3,12 +3,13 @@
 /** Тип медиаконтента */
 export type MediaType = 'anime' | 'movie' | 'series'
 
-/** Фильтры для медиа */
+export type MediaEndpoint = 'anime'
+
 export type MediaFilters = {
-  genres?: string[] // список slug жанров
-  age?: number // возрастной рейтинг
+  genres?: (string | number)[]
+  age?: number
   status?: 'announced' | 'airing' | 'completed'
-  type?: 'movie' | 'series' // только для фильмов/сериалов
+  type?: 'movie' | 'series'
 }
 
 /** Сортировка */

@@ -1,39 +1,23 @@
-import { AnimeGridSkeleton } from '@/components/anime/AnimeGridSkeleton'
-import { AnimeSwiper } from '@/components/anime/AnimeSwiper'
-import { HeroAnime } from '@/components/HeroAnime'
+'use client'
+import { GenresList } from '@/components/GenresList'
+import { MediaContent } from '@/components/MediaContent'
+import { useState } from 'react'
 
-async function getAnime() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime?limit=20&sort=rating_desc`,
-    { cache: 'no-store' },
-  )
-  const data = await res.json()
-  return data.docs
-}
-
-export default async function AnimePage() {
-  const anime = await getAnime()
-
-  const hero = anime[0]
-  const popular = anime.slice(1, 12)
-  const fresh = anime.slice(12, 40)
-
+export default function AnimePage() {
+  const [selectedGenre, setSelectedGenre] = useState<string | undefined>(undefined)
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 ">
-      {/* HERO */}
-      {hero ? <HeroAnime anime={hero} /> : <AnimeGridSkeleton count={1} />}
+    <div className=" container lg:px-7 px-4 py-10 flex flex-col gap-20">
+      {/* Онгоинги */}
+      <MediaContent title="📺 Онгоинги" filters={{ status: 'airing' }} sort="year_desc" showHero />
 
-      {/* POPULAR */}
-      <section className="mb-16">
-        <h2 className="mb-6 text-3xl font-bold">🔥 Популярное</h2>
-        <AnimeSwiper items={popular} />
-      </section>
+      {/* 12+ + жанр school */}
+      <MediaContent title="🆕 Новые релизы" sort="year_desc" filters={{ status: 'completed' }} />
 
-      {/* NEW */}
-      <section>
-        <h2 className="mb-6 text-3xl font-bold">🆕 Новые</h2>
-        <AnimeSwiper items={fresh} />
-      </section>
+      {/* Жанры */}
+      <GenresList onSelect={setSelectedGenre} />
+
+      {/* Популярное */}
+      <MediaContent title="🔥 Популярное аниме" />
     </div>
   )
 }

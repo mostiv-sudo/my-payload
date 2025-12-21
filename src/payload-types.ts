@@ -178,6 +178,9 @@ export interface Media {
 export interface Anime {
   id: number;
   title: string;
+  /**
+   * Используется для slug и SEO
+   */
   title_en: string;
   play_link?: string | null;
   year?: number | null;

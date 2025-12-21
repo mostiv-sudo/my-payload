@@ -8,9 +8,19 @@ export const Anime: CollectionConfig = {
   },
 
   // --- Какие поля заполнять автоматически ---
+  /**
+   * Поля, которые автоматически подгружаются
+   * при запросах (важно для листингов)
+   */
   defaultPopulate: {
     slug: true,
+    title: true,
+    poster: true,
+    rating: true,
   },
+  /**
+   * Доступы (позже можно ограничить)
+   */
   access: {
     read: () => true,
     create: () => true,
@@ -38,6 +48,9 @@ export const Anime: CollectionConfig = {
               required: true,
               unique: true,
               label: 'Название (EN)',
+              admin: {
+                description: 'Используется для slug и SEO',
+              },
             },
             {
               name: 'play_link',
@@ -49,6 +62,7 @@ export const Anime: CollectionConfig = {
               name: 'year',
               type: 'number',
               label: 'Год',
+              index: true,
             },
 
             {
@@ -68,6 +82,7 @@ export const Anime: CollectionConfig = {
               type: 'number',
               label: 'Оценка',
               defaultValue: 0,
+              index: true,
             },
           ],
         },
@@ -97,7 +112,8 @@ export const Anime: CollectionConfig = {
               type: 'select',
               label: 'Тип',
               required: true,
-              defaultValue: 'movie',
+              index: true,
+              defaultValue: 'series',
               options: [
                 { label: 'Фильм', value: 'movie' },
                 { label: 'Сериал', value: 'series' },
@@ -109,6 +125,7 @@ export const Anime: CollectionConfig = {
               relationTo: 'genres',
               hasMany: true,
               label: 'Жанры',
+              index: true,
             },
             {
               name: 'studios',
@@ -145,6 +162,7 @@ export const Anime: CollectionConfig = {
               name: 'minimal_age',
               type: 'number',
               label: 'Минимальный возраст',
+              index: true,
             },
             {
               name: 'rating_mpaa',
@@ -164,6 +182,7 @@ export const Anime: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
+      index: true,
       defaultValue: 'completed',
       options: [
         { label: 'Анонс', value: 'announced' },

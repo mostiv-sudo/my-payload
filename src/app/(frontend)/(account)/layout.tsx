@@ -48,7 +48,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 backdrop-blur-md
                 supports-[backdrop-filter]:bg-background/50
                 shadow-sm
-                p-6 sm:p-8
+                p-4 sm:p-6
               "
             >
               {children}

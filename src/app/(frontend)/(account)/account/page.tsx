@@ -27,8 +27,8 @@ export default async function AccountPage() {
     <div>
       <div className="">
         {/* HEADER */}
-        <CardHeader className="space-y-3">
-          <CardTitle className="flex items-center gap-3 text-2xl font-bold">
+        <CardHeader className="space-y-3 p-2">
+          <CardTitle className="flex items-center gap-3 text-2xl font-bold ">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <User size={20} />
             </span>
@@ -40,7 +40,7 @@ export default async function AccountPage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-8 p-2">
           {/* USER INFO */}
           <div
             className="

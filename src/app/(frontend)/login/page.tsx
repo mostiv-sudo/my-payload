@@ -25,7 +25,7 @@ export default async function Login() {
       {/* CARD */}
       <div
         className="
-          w-full max-w-lg rounded-3xl
+          w-full max-w-lg flex flex-col gap-6 rounded-3xl
           border border-border/60
           bg-background/80
           backdrop-blur-xl
@@ -35,7 +35,7 @@ export default async function Login() {
         "
       >
         {/* HEADER */}
-        <div className="mb-6 text-center">
+        <header className="flex flex-col gap-3 text-center">
           <h1
             className="
               text-3xl font-bold
@@ -45,22 +45,24 @@ export default async function Login() {
           >
             Вход в аккаунт
           </h1>
-
-          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             Войдите, чтобы управлять профилем, получать рекомендации и продолжить просмотр.
           </p>
-        </div>
+        </header>
 
         {/* FORM */}
         <LoginForm />
 
         {/* FOOTER */}
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <footer className="text-center text-sm text-muted-foreground">
           Нет аккаунта?{' '}
-          <Link href="/create-account" className="font-medium text-primary hover:underline">
+          <Link
+            href="/create-account"
+            className="font-medium text-primary hover:underline transition-colors duration-200"
+          >
             Зарегистрироваться
           </Link>
-        </div>
+        </footer>
       </div>
     </div>
   )

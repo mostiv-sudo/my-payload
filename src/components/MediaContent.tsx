@@ -1,54 +1,63 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimeGridSkeleton } from '@/components/anime/AnimeGridSkeleton'
 import { AnimeSwiper } from '@/components/anime/AnimeSwiper'
 import { HeroAnime } from '@/components/HeroAnime'
 import { getMedia, resolveGenreIds } from '@/lib/getMedia'
-import type { MediaFilters, SortType, MediaEndpoint } from '@/lib/types'
+import type { MediaFilters, SortType, MediaItem } from '@/lib/types'
 
 type Props = {
   title?: string
-  endpoint?: MediaEndpoint
   limit?: number
   filters?: MediaFilters
   sort?: SortType
   showHero?: boolean
 }
 
+/**
+ * Клиентский компонент загрузки и отображения контента
+ * Работает с коллекцией `anime`
+ */
 export function MediaContent({
   title = 'Контент',
-  endpoint = 'anime',
   limit = 40,
   filters,
   sort = 'rating_desc',
   showHero = false,
 }: Props) {
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<MediaItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  /**
+   * Стабилизируем фильтры для useEffect
+   */
+  const stableFilters = useMemo(() => filters, [filters])
 
   useEffect(() => {
     let cancelled = false
 
-    const fetchData = async () => {
+    async function fetchMedia() {
       setIsLoading(true)
 
       try {
-        let resolvedFilters = filters
+        let resolvedFilters = stableFilters
 
-        // 🔁 slug → genreId (ТОЛЬКО если реально есть slug)
-        if (filters?.genres?.some((g) => typeof g === 'string')) {
-          const slugs = filters.genres.filter((g): g is string => typeof g === 'string')
+        /**
+         * slug → genreId
+         */
+        if (stableFilters?.genres?.some((g) => typeof g === 'string')) {
+          const slugs = stableFilters.genres.filter((g): g is string => typeof g === 'string')
 
           const ids = await resolveGenreIds(slugs)
 
           resolvedFilters = {
-            ...filters,
+            ...stableFilters,
             genres: ids,
           }
         }
 
-        const { items } = await getMedia(endpoint, {
+        const { items } = await getMedia({
           page: 1,
           limit,
           sort,
@@ -56,9 +65,9 @@ export function MediaContent({
         })
 
         if (!cancelled) setItems(items)
-      } catch (err) {
+      } catch (error) {
         if (!cancelled) {
-          console.error('MediaContent error:', err)
+          console.error('MediaContent error:', error)
           setItems([])
         }
       } finally {
@@ -66,28 +75,32 @@ export function MediaContent({
       }
     }
 
-    fetchData()
+    fetchMedia()
 
     return () => {
       cancelled = true
     }
-  }, [endpoint, limit, sort, JSON.stringify(filters)])
+  }, [limit, sort, stableFilters])
 
-  const hero = showHero ? items[0] : null
-  const popular = showHero ? items.slice(1, 12) : items.slice(0, 12)
-  const fresh = items.slice(showHero ? 12 : 0)
+  /**
+   * Разделение данных для UI
+   */
+  const heroItem = showHero ? items[0] : null
+  const popularItems = showHero ? items.slice(1, 12) : items.slice(0, 12)
 
   return (
     <div className="flex flex-col gap-10">
       {/* HERO */}
       {showHero &&
-        (isLoading ? <AnimeGridSkeleton count={1} /> : hero && <HeroAnime anime={hero} />)}
+        (isLoading ? <AnimeGridSkeleton count={1} /> : heroItem && <HeroAnime anime={heroItem} />)}
+
       <header>
         <h2 className="text-3xl font-bold">{title}</h2>
       </header>
+
       {/* POPULAR */}
       <section>
-        {isLoading ? <AnimeGridSkeleton count={6} /> : <AnimeSwiper items={popular} />}
+        {isLoading ? <AnimeGridSkeleton count={6} /> : <AnimeSwiper items={popularItems} />}
       </section>
     </div>
   )

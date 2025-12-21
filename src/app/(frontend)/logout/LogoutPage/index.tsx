@@ -10,19 +10,18 @@ import { Loader2, LogOut } from 'lucide-react'
 export const LogoutPage: React.FC = () => {
   const { logout } = useAuth()
 
-  const [loading, setLoading] = useState(true)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const [message, setMessage] = useState<string>('Выход из аккаунта…')
 
   useEffect(() => {
     const performLogout = async () => {
       try {
         await logout()
-        setSuccess('Вы успешно вышли из аккаунта.')
+        setMessage('Вы успешно вышли из аккаунта.')
+        setStatus('success')
       } catch {
-        setError('Вы уже вышли из аккаунта.')
-      } finally {
-        setLoading(false)
+        setMessage('Вы уже вышли из аккаунта.')
+        setStatus('error')
       }
     }
 
@@ -31,51 +30,43 @@ export const LogoutPage: React.FC = () => {
 
   return (
     <div className="container min-h-[70vh] flex items-center justify-center">
-      <Card
-        className="
-          max-w-md w-full
-          border border-border/60
-          bg-background/70
-          backdrop-blur-md
-          supports-[backdrop-filter]:bg-background/50
-          shadow-sm
-        "
-      >
+      <Card className="max-w-md w-full border border-border/60 bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/50 shadow-sm transition-all">
         <CardContent className="p-8 text-center space-y-6">
-          {loading && (
-            <div className="flex flex-col items-center gap-4 text-muted-foreground">
+          {status === 'loading' && (
+            <div
+              className="flex flex-col items-center gap-4 text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
               <Loader2 className="animate-spin" size={32} />
-              <p>Выход из аккаунта…</p>
+              <p>{message}</p>
             </div>
           )}
 
-          {!loading && success && (
+          {(status === 'success' || status === 'error') && (
             <>
               <div className="flex flex-col items-center gap-3">
-                <LogOut className="text-primary" size={36} />
-                <h1 className="text-2xl font-semibold">{success}</h1>
+                <LogOut
+                  className={`text-${status === 'success' ? 'primary' : 'destructive'}`}
+                  size={36}
+                />
+                <h1
+                  className={`text-2xl font-semibold ${status === 'error' ? 'text-destructive' : ''}`}
+                >
+                  {message}
+                </h1>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                <Button asChild>
+                <Button asChild className="transition-colors duration-200">
                   <Link href="/anime">Перейти к аниме</Link>
                 </Button>
 
-                <Button variant="outline" asChild>
-                  <Link href="/login">Войти снова</Link>
-                </Button>
-              </div>
-            </>
-          )}
-
-          {!loading && error && (
-            <>
-              <h1 className="text-2xl font-semibold text-destructive">{error}</h1>
-
-              <div className="flex justify-center pt-4">
-                <Button asChild>
-                  <Link href="/anime">На главную</Link>
-                </Button>
+                {status === 'success' && (
+                  <Button variant="outline" asChild className="transition-colors duration-200">
+                    <Link href="/login">Войти снова</Link>
+                  </Button>
+                )}
               </div>
             </>
           )}

@@ -4,8 +4,8 @@ import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Metadata } from 'next'
-import { EpisodesList } from '@/components/anime/EpisodesList'
 import { EpisodesSlider } from '@/components/anime/EpisodesSlider'
+import { Fragment } from 'react'
 
 const statusMap: Record<string, string> = {
   announced: 'Анонс',
@@ -34,8 +34,10 @@ type Anime = {
   description?: string
   genres?: (number | Genre)[]
   minimal_age: number
+  play_link?: string // добавляем ссылку для фильмов
 }
 
+// --- Fetch Anime ---
 async function getAnime(slug: string): Promise<Anime | null> {
   try {
     const res = await fetch(
@@ -51,6 +53,7 @@ async function getAnime(slug: string): Promise<Anime | null> {
   }
 }
 
+// --- Genres ---
 function extractGenreIds(genres: (number | Genre)[]): number[] {
   return genres
     .map((g) => (typeof g === 'number' ? g : g?.id))
@@ -72,6 +75,7 @@ async function getGenresByIds(ids: number[]): Promise<Genre[]> {
   }
 }
 
+// --- Metadata ---
 export async function generateMetadata({
   params,
 }: {
@@ -90,44 +94,42 @@ export async function generateMetadata({
     openGraph: {
       title: anime.title,
       description: anime.description || '',
-      images: [
-        {
-          url: anime.poster || '/placeholder.jpg',
-          width: 800,
-          height: 600,
-        },
-      ],
+      images: [{ url: anime.poster || '/placeholder.jpg', width: 800, height: 600 }],
     },
   }
 }
 
-type Args = {
-  params: Promise<{ slug: string }>
-}
+type Args = { params: Promise<{ slug: string }> }
 
 export default async function AnimeDetailsPage({ params }: Args) {
   const { slug } = await params
   const anime = await getAnime(slug)
   if (!anime) return notFound()
+
   const genreIds = extractGenreIds(anime.genres || [])
   const genres = await getGenresByIds(genreIds)
 
   return (
     <div className="lg:container mx-auto px-4 py-8 mt-20 space-y-8">
-      {/* Основной блок с постером и информацией */}
+      {/* Карточка аниме */}
       <Card className="relative overflow-hidden rounded-3xl border border-border/60 bg-background/80 dark:bg-background/50 backdrop-blur-md shadow-sm dark:shadow-black/20 hover:shadow-md transition-all">
         <CardContent className="flex flex-col lg:flex-row gap-8 p-6 lg:p-10">
           <div className="w-full lg:w-1/3 max-w-sm mx-auto">
-            <Image
-              src={anime.poster || '/placeholder.jpg'}
-              alt={anime.title}
-              width={500}
-              height={700}
-              className="rounded-2xl shadow-md object-cover"
-            />
+            {anime.poster ? (
+              <Image
+                src={anime.poster}
+                alt={anime.title}
+                width={500}
+                height={700}
+                className="rounded-2xl shadow-md object-cover"
+              />
+            ) : (
+              <div className="h-[700px] w-full rounded-2xl bg-muted animate-pulse" />
+            )}
           </div>
 
           <div className="flex-1 space-y-5 text-foreground">
+            {/* Заголовки */}
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold">{anime.title}</h1>
               {anime.title_en && (
@@ -135,6 +137,7 @@ export default async function AnimeDetailsPage({ params }: Args) {
               )}
             </div>
 
+            {/* Рейтинг */}
             {anime.rating && (
               <div className="flex items-center gap-3">
                 <div className="text-4xl font-black text-yellow-400">{anime.rating}</div>
@@ -142,43 +145,37 @@ export default async function AnimeDetailsPage({ params }: Args) {
               </div>
             )}
 
+            {/* Основная информация */}
             <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-              <span>{anime.year || '—'} год</span>
-              <span>•</span>
-              <span>{anime.type === 'movie' ? 'Фильм' : 'Сериал'}</span>
-              <span>•</span>
-              <span>{anime.status ? statusMap[anime.status] : '—'}</span>
-              {/* Возрастное ограничение */}
-              {anime.minimal_age !== undefined && (
-                <>
-                  <span>•</span>
-                  <span>{anime.minimal_age}+</span>
-                </>
-              )}
-
-              {anime.type === 'movie' && anime.duration && (
-                <>
-                  <span>•</span>
-                  <span>{anime.duration} мин.</span>
-                </>
-              )}
-
-              {anime.type === 'series' && (
-                <>
-                  {anime.episodesCount && (
-                    <>
-                      <span>•</span>
-                      <span>{anime.episodesCount} серий</span>
-                    </>
-                  )}
-                  {anime.seasonsCount && (
-                    <>
-                      <span>•</span>
-                      <span>{anime.seasonsCount} сезонов</span>
-                    </>
-                  )}
-                </>
-              )}
+              <Fragment>
+                <span>{anime.year || '—'} год</span>•
+                <span>{anime.type === 'movie' ? 'Фильм' : 'Сериал'}</span>•
+                <span>{anime.status ? statusMap[anime.status] : '—'}</span>
+                {anime.minimal_age !== undefined && (
+                  <>
+                    •<span>{anime.minimal_age}+</span>
+                  </>
+                )}
+                {anime.type === 'movie' && anime.duration && (
+                  <>
+                    •<span>{anime.duration} мин.</span>
+                  </>
+                )}
+                {anime.type === 'series' && (
+                  <>
+                    {anime.episodesCount && (
+                      <>
+                        •<span>{anime.episodesCount} серий</span>
+                      </>
+                    )}
+                    {anime.seasonsCount && (
+                      <>
+                        •<span>{anime.seasonsCount} сезонов</span>
+                      </>
+                    )}
+                  </>
+                )}
+              </Fragment>
             </div>
 
             {/* Жанры */}
@@ -215,8 +212,26 @@ export default async function AnimeDetailsPage({ params }: Args) {
         </CardContent>
       </Card>
 
-      {/* Эпизоды для сериалов */}
-      {anime.type === 'series' && anime.id && <EpisodesSlider animeId={anime.id} />}
+      {/* Видео или эпизоды */}
+      {anime.type === 'movie' ? (
+        anime.play_link ? (
+          <div className="mt-8 space-y-3 transition-opacity duration-300">
+            <h3 className="text-lg font-semibold">Фильм</h3>
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-border/60 shadow-lg">
+              <iframe
+                src={anime.play_link}
+                title={anime.title}
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="mt-8 text-muted-foreground">Ссылка на видео отсутствует.</p>
+        )
+      ) : (
+        anime.id && <EpisodesSlider animeId={anime.id} />
+      )}
 
       {/* Ссылка назад */}
       <Link

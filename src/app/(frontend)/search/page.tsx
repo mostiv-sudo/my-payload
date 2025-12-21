@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Input } from '@/components/ui/input'
@@ -21,12 +21,12 @@ type SearchDoc = {
 }
 
 const LIMIT = 12
+const MIN_QUERY_LENGTH = 2
 
 export default function SearchPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // 🔹 init from URL
   const initialQ = searchParams.get('q') ?? ''
   const initialPage = Number(searchParams.get('page') ?? 1)
 
@@ -37,65 +37,68 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(false)
 
-  const updateUrl = (next: { q?: string; page?: number }) => {
-    const params = new URLSearchParams(searchParams.toString())
+  const updateUrl = useCallback(
+    (next: { q?: string; page?: number }) => {
+      const params = new URLSearchParams(searchParams.toString())
 
-    if (next.q !== undefined) {
-      next.q ? params.set('q', next.q) : params.delete('q')
-      params.set('page', '1')
-    }
+      if (next.q !== undefined) {
+        next.q ? params.set('q', next.q) : params.delete('q')
+        params.set('page', '1')
+      }
 
-    if (next.page !== undefined) {
-      params.set('page', String(next.page))
-    }
+      if (next.page !== undefined) {
+        params.set('page', String(next.page))
+      }
 
-    router.replace(`?${params.toString()}`, { scroll: false })
-  }
+      router.replace(`?${params.toString()}`, { scroll: false })
+    },
+    [router, searchParams],
+  )
 
-  const fetchData = async (pageToLoad = 1, replace = false) => {
-    if (!q.trim()) return
+  const fetchData = useCallback(
+    async (pageToLoad = 1, replace = false) => {
+      if (q.trim().length < MIN_QUERY_LENGTH) return
 
-    pageToLoad === 1 ? setInitialLoading(true) : setLoading(true)
+      pageToLoad === 1 ? setInitialLoading(true) : setLoading(true)
 
-    try {
-      const res = await fetch(
-        `/api/search?where[searchTitle][like]=${encodeURIComponent(q)}&page=${pageToLoad}&limit=${LIMIT}`,
-      )
+      try {
+        const res = await fetch(
+          `/api/search?where[searchTitle][like]=${encodeURIComponent(q)}&page=${pageToLoad}&limit=${LIMIT}`,
+        )
+        const json = await res.json()
 
-      const json = await res.json()
-      console.log(json)
-      const mapped: MediaItem[] = json.docs.map((item: SearchDoc) => ({
-        id: item.id,
-        slug: item.slug,
-        title: item.searchTitle,
-        poster: item.poster,
-        type: item.type,
-        year: item.year,
-      }))
+        const mapped: MediaItem[] = json.docs.map((item: SearchDoc) => ({
+          id: item.id,
+          slug: item.slug,
+          title: item.searchTitle,
+          poster: item.poster,
+          type: item.type,
+          year: item.year,
+        }))
 
-      setItems((prev) => (replace ? mapped : [...prev, ...mapped]))
-      setHasMore(json.hasNextPage)
-      setPage(pageToLoad)
-    } finally {
-      setLoading(false)
-      setInitialLoading(false)
-    }
-  }
+        setItems((prev) => (replace ? mapped : [...prev, ...mapped]))
+        setHasMore(json.hasNextPage)
+        setPage(pageToLoad)
+      } catch (err) {
+        console.error('Failed to fetch search data', err)
+      } finally {
+        setLoading(false)
+        setInitialLoading(false)
+      }
+    },
+    [q],
+  )
 
-  // 🔍 URL → DATA (при первом рендере и Back/Forward)
+  // URL → DATA (при монтировании и Back/Forward)
   useEffect(() => {
-    if (q.trim().length < 2) {
-      setItems([])
-      return
-    }
-
-    fetchData(page, true)
+    if (q.trim().length >= MIN_QUERY_LENGTH) fetchData(initialPage, true)
+    else setItems([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 🔍 INPUT → URL → DATA
+  // INPUT → URL → DATA (дебаунс)
   useEffect(() => {
-    if (q.trim().length < 2) {
+    if (q.trim().length < MIN_QUERY_LENGTH) {
       updateUrl({ q: '' })
       setItems([])
       return
@@ -107,11 +110,10 @@ export default function SearchPage() {
     }, 600)
 
     return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q])
+  }, [q, fetchData, updateUrl])
 
   return (
-    <div className="lg:mx-auto mx-3 max-w-7xl  pt-12 pb-5">
+    <div className="lg:mx-auto mx-3 max-w-7xl pt-12 pb-5">
       <Card className="min-h-[80vh]">
         <CardHeader>
           <CardTitle className="text-2xl">Поиск</CardTitle>
@@ -139,7 +141,7 @@ export default function SearchPage() {
           )}
 
           {/* EMPTY */}
-          {!initialLoading && items.length === 0 && q.trim().length >= 2 && (
+          {!initialLoading && items.length === 0 && q.trim().length >= MIN_QUERY_LENGTH && (
             <>
               <Separator />
               <p className="text-sm text-muted-foreground text-center">Ничего не найдено</p>
@@ -147,7 +149,6 @@ export default function SearchPage() {
           )}
 
           {/* RESULTS */}
-
           {items.length > 0 && (
             <>
               <Separator />
@@ -168,7 +169,8 @@ export default function SearchPage() {
                 </div>
               )}
 
-              {loading && (
+              {/* Loading skeleton при подгрузке */}
+              {loading && !initialLoading && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <Skeleton key={i} className="h-64 rounded-2xl" />

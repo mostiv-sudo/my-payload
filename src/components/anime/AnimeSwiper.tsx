@@ -20,7 +20,7 @@ export function AnimeSwiper({ items }: { items: any[] }) {
       breakpoints={{
         640: { slidesPerView: 3 },
         1024: { slidesPerView: 5 },
-        1280: { slidesPerView: 6 },
+        1280: { slidesPerView: 7 },
       }}
       className="!pb-2"
     >

@@ -73,6 +73,7 @@ export interface Config {
     genres: Genre;
     studios: Studio;
     episodes: Episode;
+    comments: Comment;
     search: Search;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -87,6 +88,7 @@ export interface Config {
     genres: GenresSelect<false> | GenresSelect<true>;
     studios: StudiosSelect<false> | StudiosSelect<true>;
     episodes: EpisodesSelect<false> | EpisodesSelect<true>;
+    comments: CommentsSelect<false> | CommentsSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -186,6 +188,7 @@ export interface Anime {
   year?: number | null;
   description?: string | null;
   poster?: (number | null) | Media;
+  poster_url?: string | null;
   rating?: number | null;
   external_ids?: {
     kinopoisk?: string | null;
@@ -277,6 +280,19 @@ export interface Episode {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "comments".
+ */
+export interface Comment {
+  id: number;
+  anime: number | Anime;
+  author?: (number | null) | User;
+  username: string;
+  content: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This is a collection of automatically created search results. These results are used by the global site search and will be updated automatically as documents in the CMS are created or updated.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -344,6 +360,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'episodes';
         value: number | Episode;
+      } | null)
+    | ({
+        relationTo: 'comments';
+        value: number | Comment;
       } | null)
     | ({
         relationTo: 'search';
@@ -444,6 +464,7 @@ export interface AnimeSelect<T extends boolean = true> {
   year?: T;
   description?: T;
   poster?: T;
+  poster_url?: T;
   rating?: T;
   external_ids?:
     | T
@@ -512,6 +533,18 @@ export interface EpisodesSelect<T extends boolean = true> {
   videoLink?: T;
   generateSlug?: T;
   slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "comments_select".
+ */
+export interface CommentsSelect<T extends boolean = true> {
+  anime?: T;
+  author?: T;
+  username?: T;
+  content?: T;
   updatedAt?: T;
   createdAt?: T;
 }

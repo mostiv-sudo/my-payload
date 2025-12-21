@@ -80,7 +80,29 @@ export type MediaItem = {
   id: number
   title: string
   poster?: string
+  poster_url?: string
+  slug: string
+  description: string
+
   year?: number
   rating?: number
   type?: MediaType
+}
+
+/**
+ * Тип аниме (расширяет MediaItem)
+ * Можно добавить поля из payload / API
+ */
+export type Anime = MediaItem & {
+  episodes?: Array<{
+    id: string
+    title: string
+    episodeNumber: number
+    season: number
+    videoLink?: string
+  }>
+  genres?: { id: number; title: string; slug: string }[]
+  status?: MediaStatus
+  minimal_age?: number
+  type?: 'movie' | 'series' | 'anime'
 }

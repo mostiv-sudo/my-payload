@@ -11,6 +11,7 @@ export function mapAnime(item: ExternalAnime) {
 
     year: item.year ?? null,
     description: item.description ?? '',
+    poster_url: item.anime_poster_url ?? '/placeholder.jpg',
     rating: item.shikimori_rating ?? 0,
 
     type,

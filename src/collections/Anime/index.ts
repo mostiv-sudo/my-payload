@@ -78,6 +78,11 @@ export const Anime: CollectionConfig = {
               label: 'Постер',
             },
             {
+              name: 'poster_url',
+              type: 'text',
+              label: 'Постер URL',
+            },
+            {
               name: 'rating',
               type: 'number',
               label: 'Оценка',

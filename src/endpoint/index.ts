@@ -4,8 +4,9 @@ import { seedAnime } from './steps/anime.seed'
 import { seedEpisodes } from './steps/episodes/episodes.seed'
 import { seedGenres } from './steps/genres/genres.seed'
 import { seedAddGenreAnime } from './steps/anime-genres.seed'
+import { seedUpcomingEpisodes } from './steps/episodes/episodes.upcoming.seed'
 
-type SeedMode = 'anime' | 'episodes' | 'genres' | 'add-genres' | 'full'
+type SeedMode = 'anime' | 'episodes' | 'upcoming' | 'genres' | 'add-genres' | 'full'
 
 export async function seed(payload: Payload) {
   const mode = process.env.SEED as SeedMode | undefined
@@ -25,6 +26,9 @@ export async function seed(payload: Payload) {
       case 'genres':
         await seedGenres(payload)
         break
+      case 'upcoming':
+        await seedUpcomingEpisodes(payload)
+        break
 
       case 'add-genres':
         await seedAddGenreAnime(payload)
@@ -35,6 +39,7 @@ export async function seed(payload: Payload) {
         await seedGenres(payload)
         await seedAddGenreAnime(payload)
         await seedEpisodes(payload)
+        await seedUpcomingEpisodes(payload)
         break
 
       default:

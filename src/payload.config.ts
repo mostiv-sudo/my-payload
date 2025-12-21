@@ -17,6 +17,7 @@ import { Studios } from './collections/Studios'
 import { searchPlugin } from '@payloadcms/plugin-search'
 import { Episodes } from './collections/Episodes'
 import { seed } from './endpoint'
+import { Comments } from './collections/Comments'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -30,7 +31,7 @@ export default buildConfig({
   },
 
   onInit: async (payload) => {
-    if (process.env.SEED === 'full') {
+    if (process.env.SEED === 'upcoming') {
       await seed(payload)
     }
   },
@@ -48,7 +49,7 @@ export default buildConfig({
       ru,
     },
   },
-  collections: [Users, Media, Anime, Genres, Studios, Episodes],
+  collections: [Users, Media, Anime, Genres, Studios, Episodes, Comments],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

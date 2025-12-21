@@ -26,7 +26,7 @@ async function getGenreIdsBySlug(slugs: string[]): Promise<string[]> {
   return data.docs.map((g: any) => g.id)
 }
 
-export async function getAnime({ sort = 'rating_desc', page = 1, limit = 24, filters }: Params) {
+export async function getAnime({ sort = 'rating_desc', page = 1, limit = 25, filters }: Params) {
   const params = new URLSearchParams()
 
   // --- Сортировка ---
@@ -82,6 +82,7 @@ export async function getAnime({ sort = 'rating_desc', page = 1, limit = 24, fil
       slug: item.slug,
       title: item.title,
       poster: item.poster?.url ?? item.poster ?? null,
+      poster_url: item.poster_url,
       type: item.type,
       year: item.year,
       rating: item.rating,

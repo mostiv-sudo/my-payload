@@ -5,6 +5,7 @@ export type Anime = {
   slug: string
   title: string
   poster?: string
+  poster_url?: string
   rating?: number
   year?: number
   type?: 'movie' | 'series'
@@ -36,7 +37,7 @@ export function AnimeCard({ anime }: AnimeCardProps) {
         "
       >
         <img
-          src={anime.poster || '/placeholder.jpg'}
+          src={anime.poster_url || '/placeholder.jpg'}
           alt={anime.title}
           className="
             w-full h-[260px] object-cover

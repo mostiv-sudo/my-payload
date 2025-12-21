@@ -19,7 +19,7 @@ type Params = {
 export async function getAnimeByType({
   type,
   page = 1,
-  limit = 24,
+  limit = 25,
   sort = 'rating_desc',
   filters,
 }: Params) {

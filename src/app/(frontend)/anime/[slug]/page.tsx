@@ -1,3 +1,4 @@
+// /anime/[slug]/page.tsx
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Metadata } from 'next'
 import { EpisodesSlider } from '@/components/anime/EpisodesSlider'
 import { Fragment } from 'react'
+import { AnimeComments } from '@/components/anime/AnimeComments'
 
 const statusMap: Record<string, string> = {
   announced: 'Анонс',
@@ -24,6 +26,7 @@ type Anime = {
   title: string
   title_en?: string
   poster?: string
+  poster_url?: string
   rating?: number
   year?: number
   type: 'movie' | 'series'
@@ -34,7 +37,7 @@ type Anime = {
   description?: string
   genres?: (number | Genre)[]
   minimal_age: number
-  play_link?: string // добавляем ссылку для фильмов
+  play_link?: string
 }
 
 // --- Fetch Anime ---
@@ -75,16 +78,17 @@ async function getGenresByIds(ids: number[]): Promise<Genre[]> {
   }
 }
 
-// --- Metadata ---
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: { slug: string } | Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { slug } = await params
+  const { slug } = await params // <-- обязательно await
   const anime = await getAnime(slug)
   if (!anime) return {}
+
   const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+
   return {
     title: anime.title,
     description:
@@ -99,9 +103,10 @@ export async function generateMetadata({
   }
 }
 
-type Args = { params: Promise<{ slug: string }> }
+// --- Страница ---
+type Params = { params: { slug: string } }
 
-export default async function AnimeDetailsPage({ params }: Args) {
+export default async function AnimeDetailsPage({ params }: Params) {
   const { slug } = await params
   const anime = await getAnime(slug)
   if (!anime) return notFound()
@@ -115,9 +120,9 @@ export default async function AnimeDetailsPage({ params }: Args) {
       <Card className="relative overflow-hidden rounded-3xl border border-border/60 bg-background/80 dark:bg-background/50 backdrop-blur-md shadow-sm dark:shadow-black/20 hover:shadow-md transition-all">
         <CardContent className="flex flex-col lg:flex-row gap-8 p-6 lg:p-10">
           <div className="w-full lg:w-1/3 max-w-sm mx-auto">
-            {anime.poster ? (
+            {anime.poster_url ? (
               <Image
-                src={anime.poster}
+                src={anime.poster_url}
                 alt={anime.title}
                 width={500}
                 height={700}
@@ -232,6 +237,9 @@ export default async function AnimeDetailsPage({ params }: Args) {
       ) : (
         anime.id && <EpisodesSlider animeId={anime.id} />
       )}
+
+      {/* Комментарии */}
+      {anime.id && <AnimeComments animeId={anime.id} />}
 
       {/* Ссылка назад */}
       <Link

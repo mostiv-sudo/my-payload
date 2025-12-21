@@ -12,6 +12,7 @@ export interface ExternalAnime {
   minimal_age?: number
   rating_mpaa?: string
   anime_status?: string
+  anime_poster_url?: string
   released_at?: string
 
   shikimori_rating?: number

@@ -2,10 +2,10 @@ import Link from 'next/link'
 
 export function HeroAnime({ anime }: { anime: any }) {
   return (
-    <section className="relative h-[70vh] w-full overflow-hidden rounded-3xl mb-16">
+    <section className="relative h-[60vh] w-full overflow-hidden rounded-3xl mb-6">
       {/* BACKGROUND */}
       <img
-        src={anime.poster || '/placeholder.jpg'}
+        src={anime.poster_url || '/placeholder.jpg'}
         alt={anime.title}
         className="absolute inset-0 h-full w-full object-cover scale-110"
       />

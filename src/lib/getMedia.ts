@@ -1,5 +1,5 @@
 // lib/getMedia.ts
-import type { MediaFilters, SortType, MediaItem } from './types'
+import type { MediaFilters, SortType, MediaItem, Anime } from './types'
 
 type Params = {
   page: number
@@ -81,4 +81,21 @@ export async function getMedia({
     items: Array.isArray(data.docs) ? data.docs : [],
     totalPages: typeof data.totalPages === 'number' ? data.totalPages : 1,
   }
+}
+
+/**
+ * Получение одного аниме по slug
+ */
+export async function getAnimeBySlug(slug: string): Promise<Anime | null> {
+  if (!slug) return null
+
+  const url = new URL(`${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime`)
+  url.searchParams.set('where[slug][equals]', slug)
+  url.searchParams.set('depth', '1')
+
+  const res = await fetch(url.toString(), { cache: 'no-store' })
+  if (!res.ok) return null
+
+  const data = await res.json()
+  return data?.docs?.[0] || null
 }

@@ -8,6 +8,7 @@ export type MediaItem = {
   id: string
   slug: string
   poster?: string
+  poster_url?: string
   title: string
   type?: 'movie' | 'series'
   year?: number
@@ -21,7 +22,7 @@ type Props = {
   isLoading?: boolean
 }
 
-export function MediaGrid({ items, showRating = true, limit = 24, isLoading = false }: Props) {
+export function MediaGrid({ items, showRating = true, limit = 25, isLoading = false }: Props) {
   const [displayItems, setDisplayItems] = useState<MediaItem[]>(items.slice(0, limit))
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function MediaGrid({ items, showRating = true, limit = 24, isLoading = fa
             >
               <div className="relative w-full overflow-hidden rounded-2xl">
                 <img
-                  src={item.poster || '/placeholder.jpg'}
+                  src={item.poster_url || '/placeholder.jpg'}
                   alt={item.title}
                   className="w-full h-64 object-cover transition-all duration-300 ease-out group-hover:scale-110 group-hover:opacity-80"
                 />

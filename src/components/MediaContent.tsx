@@ -1,10 +1,8 @@
-'use client'
-
 import { useEffect, useMemo, useState } from 'react'
 import { AnimeGridSkeleton } from '@/components/anime/AnimeGridSkeleton'
 import { AnimeSwiper } from '@/components/anime/AnimeSwiper'
 import { HeroAnime } from '@/components/HeroAnime'
-import { getMedia, resolveGenreIds } from '@/lib/getMedia'
+import { getMedia, getAnimeBySlug, resolveGenreIds } from '@/lib/getMedia'
 import type { MediaFilters, SortType, MediaItem } from '@/lib/types'
 
 type Props = {
@@ -13,25 +11,21 @@ type Props = {
   filters?: MediaFilters
   sort?: SortType
   showHero?: boolean
+  heroSlug?: string // <-- новый проп
 }
 
-/**
- * Клиентский компонент загрузки и отображения контента
- * Работает с коллекцией `anime`
- */
 export function MediaContent({
   title = 'Контент',
-  limit = 40,
+  limit = 25,
   filters,
   sort = 'rating_desc',
   showHero = false,
+  heroSlug,
 }: Props) {
   const [items, setItems] = useState<MediaItem[]>([])
+  const [heroItem, setHeroItem] = useState<MediaItem | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  /**
-   * Стабилизируем фильтры для useEffect
-   */
   const stableFilters = useMemo(() => filters, [filters])
 
   useEffect(() => {
@@ -39,36 +33,38 @@ export function MediaContent({
 
     async function fetchMedia() {
       setIsLoading(true)
-
       try {
         let resolvedFilters = stableFilters
 
-        /**
-         * slug → genreId
-         */
         if (stableFilters?.genres?.some((g) => typeof g === 'string')) {
           const slugs = stableFilters.genres.filter((g): g is string => typeof g === 'string')
-
           const ids = await resolveGenreIds(slugs)
-
-          resolvedFilters = {
-            ...stableFilters,
-            genres: ids,
-          }
+          resolvedFilters = { ...stableFilters, genres: ids }
         }
 
-        const { items } = await getMedia({
+        const { items: mediaItems } = await getMedia({
           page: 1,
           limit,
           sort,
           filters: resolvedFilters,
         })
 
-        if (!cancelled) setItems(items)
+        if (!cancelled) {
+          setItems(mediaItems)
+
+          // Если указан heroSlug, подтягиваем именно этот anime
+          if (heroSlug) {
+            const hero = await getAnimeBySlug(heroSlug)
+            setHeroItem(hero || mediaItems[0] || null)
+          } else {
+            setHeroItem(mediaItems[0] || null)
+          }
+        }
       } catch (error) {
         if (!cancelled) {
           console.error('MediaContent error:', error)
           setItems([])
+          setHeroItem(null)
         }
       } finally {
         if (!cancelled) setIsLoading(false)
@@ -80,13 +76,11 @@ export function MediaContent({
     return () => {
       cancelled = true
     }
-  }, [limit, sort, stableFilters])
+  }, [limit, sort, stableFilters, heroSlug])
 
-  /**
-   * Разделение данных для UI
-   */
-  const heroItem = showHero ? items[0] : null
-  const popularItems = showHero ? items.slice(1, 12) : items.slice(0, 12)
+  const popularItems = heroItem
+    ? items.filter((i) => i.id !== heroItem.id).slice(0, 12)
+    : items.slice(0, 12)
 
   return (
     <div className="flex flex-col gap-10">

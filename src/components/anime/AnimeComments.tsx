@@ -27,7 +27,7 @@ type Comment = {
 }
 
 type AnimeCommentsProps = {
-  animeId: number
+  animeId: String
 }
 
 export function AnimeComments({ animeId }: AnimeCommentsProps) {

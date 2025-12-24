@@ -18,6 +18,8 @@ import { searchPlugin } from '@payloadcms/plugin-search'
 import { Episodes } from './collections/Episodes'
 import { seed } from './endpoint'
 import { Comments } from './collections/Comments'
+import { Bookmarks } from './collections/Bookmarks'
+import { Ratings } from './collections/Ratings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -49,7 +51,7 @@ export default buildConfig({
       ru,
     },
   },
-  collections: [Users, Media, Anime, Genres, Studios, Episodes, Comments],
+  collections: [Users, Media, Anime, Genres, Studios, Episodes, Comments, Bookmarks, Ratings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

@@ -1,4 +1,3 @@
-// /anime/[slug]/page.tsx
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -8,6 +7,8 @@ import { Metadata } from 'next'
 import { EpisodesSlider } from '@/components/anime/EpisodesSlider'
 import { Fragment } from 'react'
 import { AnimeComments } from '@/components/anime/AnimeComments'
+import { AnimeRatingDialog } from '@/components/anime/AnimeRating'
+import { AnimeBookmark } from '@/components/anime/AnimeBookmark'
 
 const statusMap: Record<string, string> = {
   announced: 'Анонс',
@@ -22,7 +23,7 @@ type Genre = {
 }
 
 type Anime = {
-  id: number
+  id: string
   title: string
   title_en?: string
   poster?: string
@@ -83,7 +84,7 @@ export async function generateMetadata({
 }: {
   params: { slug: string } | Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { slug } = await params // <-- обязательно await
+  const { slug } = await params
   const anime = await getAnime(slug)
   if (!anime) return {}
 
@@ -103,7 +104,6 @@ export async function generateMetadata({
   }
 }
 
-// --- Страница ---
 type Params = { params: { slug: string } }
 
 export default async function AnimeDetailsPage({ params }: Params) {
@@ -142,13 +142,24 @@ export default async function AnimeDetailsPage({ params }: Params) {
               )}
             </div>
 
-            {/* Рейтинг */}
-            {anime.rating && (
+            {/* Средний рейтинг */}
+            {anime.rating !== undefined && (
               <div className="flex items-center gap-3">
                 <div className="text-4xl font-black text-yellow-400">{anime.rating}</div>
                 <span className="text-sm text-muted-foreground">рейтинг пользователей</span>
               </div>
             )}
+
+            {/* Оценка пользователя */}
+            {anime.id && (
+              <div className="pt-2 flex">
+                <AnimeRatingDialog animeId={anime.id} />
+                {/* Добавляем в карточку аниме */}
+                {anime.id && <AnimeBookmark animeId={anime.id} />}
+              </div>
+            )}
+
+            {/* Добавляем в карточку аниме */}
 
             {/* Основная информация */}
             <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
@@ -189,7 +200,7 @@ export default async function AnimeDetailsPage({ params }: Params) {
                 {genres.map((genre) => (
                   <Link
                     key={genre.slug}
-                    href={`/genre/${genre.slug}`}
+                    href={`/genres/${genre.slug}`}
                     className="px-3 py-1 text-sm rounded-full border border-border/60 bg-background/60 backdrop-blur hover:bg-primary hover:text-primary-foreground transition"
                   >
                     {genre.title}

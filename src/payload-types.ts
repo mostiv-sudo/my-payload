@@ -74,6 +74,8 @@ export interface Config {
     studios: Studio;
     episodes: Episode;
     comments: Comment;
+    bookmarks: Bookmark;
+    ratings: Rating;
     search: Search;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -89,6 +91,8 @@ export interface Config {
     studios: StudiosSelect<false> | StudiosSelect<true>;
     episodes: EpisodesSelect<false> | EpisodesSelect<true>;
     comments: CommentsSelect<false> | CommentsSelect<true>;
+    bookmarks: BookmarksSelect<false> | BookmarksSelect<true>;
+    ratings: RatingsSelect<false> | RatingsSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -206,7 +210,7 @@ export interface Anime {
   minimal_age?: number | null;
   rating_mpaa?: string | null;
   status?: ('announced' | 'airing' | 'completed') | null;
-  relesed?: string | null;
+  released?: string | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -293,6 +297,40 @@ export interface Comment {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookmarks".
+ */
+export interface Bookmark {
+  id: number;
+  user: number | User;
+  anime: number | Anime;
+  /**
+   * Статус просмотра
+   */
+  status?: ('planned' | 'completed') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ratings".
+ */
+export interface Rating {
+  id: number;
+  user: number | User;
+  anime: number | Anime;
+  /**
+   * Оценка от 1 до 10
+   */
+  rating: number;
+  /**
+   * Необязательный комментарий к оценке
+   */
+  comment?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This is a collection of automatically created search results. These results are used by the global site search and will be updated automatically as documents in the CMS are created or updated.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -364,6 +402,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'comments';
         value: number | Comment;
+      } | null)
+    | ({
+        relationTo: 'bookmarks';
+        value: number | Bookmark;
+      } | null)
+    | ({
+        relationTo: 'ratings';
+        value: number | Rating;
       } | null)
     | ({
         relationTo: 'search';
@@ -484,7 +530,7 @@ export interface AnimeSelect<T extends boolean = true> {
   minimal_age?: T;
   rating_mpaa?: T;
   status?: T;
-  relesed?: T;
+  released?: T;
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -545,6 +591,29 @@ export interface CommentsSelect<T extends boolean = true> {
   author?: T;
   username?: T;
   content?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookmarks_select".
+ */
+export interface BookmarksSelect<T extends boolean = true> {
+  user?: T;
+  anime?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ratings_select".
+ */
+export interface RatingsSelect<T extends boolean = true> {
+  user?: T;
+  anime?: T;
+  rating?: T;
+  comment?: T;
   updatedAt?: T;
   createdAt?: T;
 }

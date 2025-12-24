@@ -5,7 +5,7 @@ export const Episodes: CollectionConfig = {
   slug: 'episodes',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'anime', 'season', 'episodeNumber'],
+    defaultColumns: ['title', 'anime', 'season', 'episodeNumber', 'released'],
   },
   access: {
     read: () => true,

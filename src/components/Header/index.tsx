@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { MenuIcon, UserIcon } from 'lucide-react'
+import { MenuIcon, UserIcon, GridIcon } from 'lucide-react'
 
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
@@ -17,53 +17,59 @@ export default function Header() {
   const searchParams = useSearchParams()
   const [isOpen, setIsOpen] = useState(false)
 
-  // Закрывать меню при переходах
   useEffect(() => {
     setIsOpen(false)
   }, [pathname, searchParams])
 
+  const menuItems = [
+    { label: 'Главная', href: '/' },
+    { label: 'Каталог', href: '/anime' },
+    { label: 'Фильмы', href: '/film' },
+    { label: 'Сериалы', href: '/tv' },
+    { label: 'Жанры', href: '/genres' },
+    { label: 'Расписание', href: '/calendar' },
+    { label: 'Поиск', href: '/search' },
+  ]
+
   return (
-    <nav className="fixed w-full z-20 top-5 ">
-      <div
-        className="max-w-3xl mx-4
-    flex items-center justify-between
-    px-5 py-4
-    rounded-full
-    border border-border/60
-    bg-background/70
-    backdrop-blur-md
-    supports-[backdrop-filter]:bg-background/50
-    shadow-sm
-    hover:shadow-md
-    transition-all
-    md:mx-auto"
-      >
+    <nav className="fixed w-full z-20 top-5">
+      <div className="max-w-screen-lg mx-4 md:mx-auto flex items-center justify-between px-5 py-4 rounded-full border border-border/60 bg-background/70 backdrop-blur-md shadow-sm hover:shadow-md transition-all">
         {/* LOGO */}
         <Link href="/" className="text-xl font-semibold text-foreground">
           Аниме
         </Link>
 
-        {/* RIGHT SIDE */}
-        <div className="flex items-center gap-3">
-          {/* Если пользователь авторизован */}
+        {/* DESKTOP MENU */}
+        <div className="hidden md:flex items-center gap-1">
+          {menuItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-1 px-3 py-2 rounded-md hover:bg-accent hover:text-primary transition"
+            >
+              {item.label}
+            </Link>
+          ))}
           {user ? (
             <Link
               href="/account"
               className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-accent"
             >
               <UserIcon className="h-4 w-4" />
-              <span>{user.email}</span>
             </Link>
           ) : (
-            <Button asChild variant="default">
+            <Button asChild variant="outline">
               <Link href="/login">Вход</Link>
             </Button>
           )}
 
-          {/* Dark/Light Toggle */}
+          <ThemeToggle />
+        </div>
+
+        {/* MOBILE MENU */}
+        <div className="md:hidden flex items-center gap-2">
           <ThemeToggle />
 
-          {/* Mobile Menu Button */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <button className="p-2 w-9 h-9 flex items-center justify-center rounded-md border border-border hover:bg-accent">
@@ -71,41 +77,20 @@ export default function Header() {
               </button>
             </SheetTrigger>
 
-            {/* MOBILE MENU CONTENT */}
             <SheetContent side="right" className="px-4">
               <SheetHeader>
                 <SheetTitle>Меню</SheetTitle>
               </SheetHeader>
 
-              <div className="py-4">
-                <ul className="flex flex-col gap-2 text-lg">
-                  <li>
-                    <Link href="/" className="hover:text-primary">
-                      Главная
+              <ul className="flex flex-col gap-2 text-lg py-4">
+                {menuItems.map((item) => (
+                  <li key={item.href}>
+                    <Link href={item.href} className="flex items-center gap-2 hover:text-primary">
+                      {item.label}
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/anime" className="hover:text-primary">
-                      Каталог
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/film" className="hover:text-primary">
-                      Фильмы
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/tv" className="hover:text-primary">
-                      Сериалы
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/search" className="hover:text-primary">
-                      Поиск
-                    </Link>
-                  </li>
-                </ul>
-              </div>
+                ))}
+              </ul>
 
               {/* USER SECTION */}
               {user ? (

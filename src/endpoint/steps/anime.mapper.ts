@@ -23,7 +23,7 @@ export function mapAnime(item: ExternalAnime) {
     rating_mpaa: item.rating_mpaa ?? null,
 
     status: mapStatus(item.anime_status),
-    relesed: item.released_at ?? null,
+    released: item.released_at ?? null,
 
     external_ids: {
       kinopoisk: item.kinopoisk_id ?? '',

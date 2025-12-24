@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Search } from 'lucide-react'
 
 import { MediaGrid, type MediaItem } from '@/components/MediaGrid'
 
@@ -16,6 +17,7 @@ type SearchDoc = {
   slug: string
   searchTitle: string
   poster?: string
+  poster_url?: string
   type: 'movie' | 'series'
   year?: number
 }
@@ -72,6 +74,7 @@ export default function SearchPage() {
           slug: item.slug,
           title: item.searchTitle,
           poster: item.poster,
+          poster_url: item.poster_url,
           type: item.type,
           year: item.year,
         }))
@@ -89,11 +92,10 @@ export default function SearchPage() {
     [q],
   )
 
-  // URL → DATA (при монтировании и Back/Forward)
+  // URL → DATA
   useEffect(() => {
     if (q.trim().length >= MIN_QUERY_LENGTH) fetchData(initialPage, true)
     else setItems([])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // INPUT → URL → DATA (дебаунс)
@@ -113,13 +115,16 @@ export default function SearchPage() {
   }, [q, fetchData, updateUrl])
 
   return (
-    <div className="lg:mx-auto mx-3 max-w-7xl pt-12 pb-5">
-      <Card className="min-h-[80vh]">
+    <div className="lg:mx-auto mx-3 container pt-12 pb-5">
+      <Card className="min-h-[80vh] border-none ">
         <CardHeader>
-          <CardTitle className="text-2xl">Поиск</CardTitle>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Search className="w-5 h-5" />
+            Поиск
+          </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 p-0">
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -129,7 +134,7 @@ export default function SearchPage() {
 
           {/* FIRST LOAD */}
           {initialLoading && (
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
               {Array.from({ length: LIMIT }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="h-64 rounded-2xl" />
@@ -152,7 +157,12 @@ export default function SearchPage() {
           {items.length > 0 && (
             <>
               <Separator />
-              <MediaGrid items={items} showRating />
+              <MediaGrid
+                items={items}
+                showRating
+                limit={LIMIT}
+                cols={{ base: 2, sm: 3, md: 4, lg: 5, xl: 6 }}
+              />
 
               {hasMore && (
                 <div className="flex justify-center mt-8">
@@ -169,9 +179,8 @@ export default function SearchPage() {
                 </div>
               )}
 
-              {/* Loading skeleton при подгрузке */}
               {loading && !initialLoading && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6 mt-6">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <Skeleton key={i} className="h-64 rounded-2xl" />
                   ))}

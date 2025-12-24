@@ -17,6 +17,7 @@ export const Anime: CollectionConfig = {
     title: true,
     poster: true,
     rating: true,
+    minimal_age: true,
   },
   /**
    * Доступы (позже можно ограничить)
@@ -196,7 +197,7 @@ export const Anime: CollectionConfig = {
       ],
     },
     {
-      name: 'relesed',
+      name: 'released',
       type: 'date',
       label: 'Дата релиза',
       admin: {

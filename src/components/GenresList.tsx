@@ -1,5 +1,7 @@
 'use client'
+
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Carousel,
@@ -13,7 +15,7 @@ import {
 // Скелетон для загрузки
 function GenreSkeleton() {
   return (
-    <Card className="animate-pulse bg-gray-300 dark:bg-gray-700 w-40 h-40 rounded-lg shadow-md">
+    <Card className="animate-pulse bg-gray-300 dark:bg-gray-700 w-36 h-36 rounded-lg shadow-md">
       <CardContent className="flex items-center justify-center"></CardContent>
     </Card>
   )
@@ -26,13 +28,12 @@ type Genre = {
 }
 
 type Props = {
-  onSelect?: (slug: string) => void
   limit?: number
+  selectedSlug?: string
 }
 
-export function GenresList({ onSelect, limit }: Props) {
+export function GenresList({ limit, selectedSlug }: Props) {
   const [genres, setGenres] = useState<Genre[]>([])
-  const [selected, setSelected] = useState<string | null>(null)
   const [api, setApi] = useState<CarouselApi>()
   const [isLoading, setIsLoading] = useState(true)
 
@@ -65,11 +66,6 @@ export function GenresList({ onSelect, limit }: Props) {
     return () => clearInterval(interval)
   }, [api])
 
-  const handleSelect = (slug: string) => {
-    setSelected(slug)
-    onSelect?.(slug)
-  }
-
   const displayedGenres = limit ? genres.slice(0, limit) : genres
 
   return (
@@ -86,21 +82,23 @@ export function GenresList({ onSelect, limit }: Props) {
         </div>
       ) : displayedGenres.length ? (
         <Carousel className="w-full py-2 relative">
-          <CarouselContent className="-ml-4 flex gap-1 p-4">
+          <CarouselContent className="-ml-4 flex gap-2 p-2">
             {displayedGenres.map((g) => (
-              <CarouselItem key={g.id} className="pl-4 md:basis-auto">
-                <Card
-                  className={`transition-transform duration-300 hover:scale-105 cursor-pointer rounded-lg shadow-md ${
-                    selected === g.slug
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100'
-                  }`}
-                  onClick={() => handleSelect(g.slug)}
-                >
-                  <CardContent className="flex items-center justify-center px-4 py-2 text-center text-sm font-medium whitespace-nowrap w-40 h-40">
-                    {g.title}
-                  </CardContent>
-                </Card>
+              <CarouselItem key={g.id} className="pl-2 md:basis-auto">
+                <Link href={`/genres/${g.slug}`} passHref>
+                  <Card
+                    className={`transition-transform duration-300 hover:scale-105 cursor-pointer rounded-lg shadow-md
+                      ${
+                        selectedSlug === g.slug
+                          ? 'bg-blue-600 text-white shadow-lg'
+                          : 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100'
+                      }`}
+                  >
+                    <CardContent className="flex items-center justify-center px-4 py-2 text-center text-sm font-medium whitespace-nowrap w-36 h-36 md:w-40 md:h-40">
+                      {g.title}
+                    </CardContent>
+                  </Card>
+                </Link>
               </CarouselItem>
             ))}
           </CarouselContent>

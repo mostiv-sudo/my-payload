@@ -15,27 +15,55 @@ export type MediaItem = {
   rating?: number
 }
 
+type ColsConfig = {
+  base?: number
+  sm?: number
+  md?: number
+  lg?: number
+  xl?: number
+}
+
 type Props = {
   items: MediaItem[]
   showRating?: boolean
   limit?: number
   isLoading?: boolean
+  cols?: number | ColsConfig // можно передавать число или объект для адаптивной сетки
 }
 
-export function MediaGrid({ items, showRating = true, limit = 25, isLoading = false }: Props) {
+export function MediaGrid({
+  items,
+  showRating = true,
+  limit = 25,
+  isLoading = false,
+  cols = { base: 2, md: 5 },
+}: Props) {
   const [displayItems, setDisplayItems] = useState<MediaItem[]>(items.slice(0, limit))
 
   useEffect(() => {
     if (!items) return
-    // Добавляем плавное обновление с небольшой задержкой
     const timeout = setTimeout(() => {
       setDisplayItems(items.slice(0, limit))
     }, 200)
     return () => clearTimeout(timeout)
-  }, [items, limit]) // зависим только от items и limit, больше никаких новых массивов!
+  }, [items, limit])
+
+  // Генерируем классы для сетки
+  const getGridClasses = () => {
+    if (typeof cols === 'number') return `grid-cols-${cols}`
+    return [
+      cols.base ? `grid-cols-${cols.base}` : '',
+      cols.sm ? `sm:grid-cols-${cols.sm}` : '',
+      cols.md ? `md:grid-cols-5` : '',
+      cols.lg ? `lg:grid-cols-6` : '',
+      cols.xl ? `xl:grid-cols-7` : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+  }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-6 min-h-[70vh]">
+    <div className={`grid gap-6 min-h-[70vh] ${getGridClasses()}`}>
       {isLoading
         ? Array.from({ length: 15 }).map((_, idx) => (
             <div key={idx} className="flex flex-col gap-2 animate-pulse">

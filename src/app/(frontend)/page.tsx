@@ -20,7 +20,7 @@ export default function AnimePage() {
       <MediaContent title="🆕 Новые релизы" sort="year_desc" filters={{ status: 'completed' }} />
 
       {/* Жанры */}
-      <GenresList onSelect={setSelectedGenre} />
+      <GenresList />
 
       {/* Популярное */}
       <MediaContent title="🔥 Популярное аниме" />

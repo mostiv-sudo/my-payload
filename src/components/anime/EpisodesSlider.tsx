@@ -13,6 +13,7 @@ type Episode = {
   episodeNumber: number
   season: number
   videoLink?: string
+  released?: string
 }
 
 type Props = { animeId: string | number }
@@ -85,34 +86,55 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
       </div>
     )
 
-  if (!episodes.length) return <p className="mt-8 text-muted-foreground">Эпизоды отсутствуют.</p>
+  if (!episodes.length) return <p className="mt-8 text-muted-foreground">Серии отсутствуют.</p>
 
   return (
     <section className="mt-12 space-y-6">
       {/* VIDEO */}
-      {currentEpisode?.videoLink && (
+      {/* VIDEO / INFO */}
+      {currentEpisode && (
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold">
-            Сезон {currentEpisode.season}, Эпизод {currentEpisode.episodeNumber}
-          </h3>
+          <h3 className="text-lg font-semibold">Серия {currentEpisode.episodeNumber}</h3>
 
-          <div className="relative aspect-video rounded-2xl overflow-hidden border border-border/60 shadow-lg">
-            {videoLoading && (
-              <div className="absolute inset-0 bg-muted/30 animate-pulse flex items-center justify-center">
-                <span className="text-sm text-muted-foreground">Загрузка видео...</span>
+          {currentEpisode.videoLink ? (
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-border/60 shadow-lg">
+              {videoLoading && (
+                <div className="absolute inset-0 bg-muted/30 animate-pulse flex items-center justify-center">
+                  <span className="text-sm text-muted-foreground">Загрузка видео...</span>
+                </div>
+              )}
+
+              <iframe
+                key={currentEpisode.id}
+                src={currentEpisode.videoLink}
+                title={`Эпизод ${currentEpisode.episodeNumber}`}
+                allowFullScreen
+                className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${
+                  videoLoading ? 'opacity-0' : 'opacity-100'
+                }`}
+                onLoad={() => setVideoLoading(false)}
+              />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-yellow-400/70 bg-yellow-400/10 p-6 text-center space-y-2 min-h-[25vh] flex items-center justify-center">
+              <div>
+                <p className="text-sm text-yellow-600 font-medium">🎬 Серия ещё не вышла</p>
+
+                {currentEpisode.released && (
+                  <p className="text-sm text-muted-foreground">
+                    Дата релиза:{' '}
+                    <span className="font-medium">
+                      {new Date(currentEpisode.released).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </p>
+                )}
               </div>
-            )}
-            <iframe
-              key={currentEpisode.id} // ключ для плавного обновления
-              src={currentEpisode.videoLink}
-              title={`Эпизод ${currentEpisode.episodeNumber}`}
-              allowFullScreen
-              className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${
-                videoLoading ? 'opacity-0' : 'opacity-100'
-              }`}
-              onLoad={() => setVideoLoading(false)}
-            />
-          </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -120,32 +142,10 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Layers size={22} className="text-primary" />
-          <h2 className="text-2xl font-bold">Эпизоды</h2>
+          <h2 className="text-2xl font-bold">Серии</h2>
         </div>
 
         {/* Селектор сезона */}
-        <div className="flex gap-2 flex-wrap mb-4">
-          {Object.keys(seasons).map((s) => {
-            const seasonNum = Number(s)
-            const isActive = seasonNum === currentSeason
-            return (
-              <button
-                key={s}
-                onClick={() => {
-                  setCurrentSeason(seasonNum)
-                  handleEpisodeChange(seasons[seasonNum][0])
-                }}
-                className={`px-4 py-1 rounded-full border transition ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background/60 border-border hover:bg-primary hover:text-primary-foreground'
-                }`}
-              >
-                Сезон {s}
-              </button>
-            )
-          })}
-        </div>
 
         {/* SLIDER */}
         {currentSeason && seasons[currentSeason] && (
@@ -176,17 +176,15 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
                     <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
                       {ep.title}
                     </div>
-                    {ep.videoLink && (
-                      <div
-                        className={`mt-4 flex items-center justify-center gap-2 text-xs font-medium ${
-                          isActive
-                            ? 'text-primary'
-                            : 'text-muted-foreground group-hover:text-primary'
-                        }`}
-                      >
-                        <Play size={16} /> Смотреть
-                      </div>
-                    )}
+                    <div className="mt-4 text-xs font-medium flex items-center gap-2">
+                      {ep.videoLink ? (
+                        <span className="flex items-center gap-1 text-primary">
+                          <Play size={14} /> Смотреть
+                        </span>
+                      ) : (
+                        <span className="text-yellow-500">⏳ Скоро</span>
+                      )}
+                    </div>
                   </div>
                 </SwiperSlide>
               )

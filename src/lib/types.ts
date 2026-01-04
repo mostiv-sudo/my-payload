@@ -1,5 +1,3 @@
-// lib/types.ts
-
 /**
  * Тип медиаконтента в системе
  * Используется для фильтрации и логики отображения
@@ -78,15 +76,23 @@ export type SearchParams = {
  */
 export type MediaItem = {
   id: number
+  slug: string
   title: string
+  description: string
   poster?: string
   poster_url?: string
-  slug: string
-  description: string
-
   year?: number
   rating?: number
-  type?: MediaType
+  type?: Exclude<MediaType, 'anime'> // movie | series
+}
+
+/**
+ * Тип жанра
+ */
+export type Genre = {
+  id: number
+  title: string
+  slug: string
 }
 
 /**
@@ -101,8 +107,13 @@ export type Anime = MediaItem & {
     season: number
     videoLink?: string
   }>
-  genres?: { id: number; title: string; slug: string }[]
+  genres?: Genre[]
   status?: MediaStatus
   minimal_age?: number
   type?: 'movie' | 'series' | 'anime'
+  play_link?: string
+  duration?: number
+  episodesCount?: number
+  seasonsCount?: number
+  title_en?: string
 }

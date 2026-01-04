@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 import { Navigation } from 'swiper/modules'
@@ -28,6 +28,7 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
   const searchParams = useSearchParams()
   const router = useRouter()
 
+  // --- Группировка по сезонам ---
   const seasons = useMemo(() => {
     const map: Record<number, Episode[]> = {}
     episodes.forEach((ep) => {
@@ -37,7 +38,7 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
     return map
   }, [episodes])
 
-  // --- Загружаем эпизоды один раз ---
+  // --- Загрузка эпизодов ---
   useEffect(() => {
     const fetchEpisodes = async () => {
       setLoading(true)
@@ -47,18 +48,21 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
           { cache: 'no-store' },
         )
         const data = await res.json()
-        const sorted = (data.docs || []).sort((a: Episode, b: Episode) =>
+        const sorted: Episode[] = (data.docs || []).sort((a: Episode, b: Episode) =>
           a.season !== b.season ? a.season - b.season : a.episodeNumber - b.episodeNumber,
         )
         setEpisodes(sorted)
 
-        const season = Number(searchParams.get('season')) || sorted[0]?.season
-        const episodeNum = Number(searchParams.get('episode')) || sorted[0]?.episodeNumber
-        setCurrentSeason(season)
-        setCurrentEpisode(
-          sorted.find((ep: Episode) => ep.season === season && ep.episodeNumber === episodeNum) ||
-            sorted[0],
-        )
+        if (sorted.length) {
+          const seasonFromUrl = Number(searchParams.get('season')) || sorted[0].season
+          const episodeFromUrl = Number(searchParams.get('episode')) || sorted[0].episodeNumber
+          setCurrentSeason(seasonFromUrl)
+          setCurrentEpisode(
+            sorted.find(
+              (ep) => ep.season === seasonFromUrl && ep.episodeNumber === episodeFromUrl,
+            ) || sorted[0],
+          )
+        }
       } catch (err) {
         console.error('Failed to fetch episodes', err)
       } finally {
@@ -66,17 +70,23 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
       }
     }
     fetchEpisodes()
-  }, [animeId])
+  }, [animeId, searchParams])
 
-  // --- Обновляем только эпизод в URL ---
-  const handleEpisodeChange = (ep: Episode) => {
-    setVideoLoading(true)
-    setCurrentEpisode(ep)
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('season', String(ep.season))
-    params.set('episode', String(ep.episodeNumber))
-    router.replace(`?${params}`, { scroll: false })
-  }
+  // --- Изменение эпизода ---
+  const handleEpisodeChange = useCallback(
+    (ep: Episode) => {
+      if (ep.id === currentEpisode?.id) return
+      setVideoLoading(true)
+      setCurrentEpisode(ep)
+      setCurrentSeason(ep.season)
+
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('season', String(ep.season))
+      params.set('episode', String(ep.episodeNumber))
+      router.replace(`?${params.toString()}`, { scroll: false })
+    },
+    [currentEpisode, router, searchParams],
+  )
 
   if (loading)
     return (
@@ -90,12 +100,10 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
 
   return (
     <section className="mt-12 space-y-6">
-      {/* VIDEO */}
-      {/* VIDEO / INFO */}
+      {/* Видео */}
       {currentEpisode && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">Серия {currentEpisode.episodeNumber}</h3>
-
           {currentEpisode.videoLink ? (
             <div className="relative aspect-video rounded-2xl overflow-hidden border border-border/60 shadow-lg">
               {videoLoading && (
@@ -103,7 +111,6 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
                   <span className="text-sm text-muted-foreground">Загрузка видео...</span>
                 </div>
               )}
-
               <iframe
                 key={currentEpisode.id}
                 src={currentEpisode.videoLink}
@@ -119,7 +126,6 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
             <div className="rounded-2xl border border-yellow-400/70 bg-yellow-400/10 p-6 text-center space-y-2 min-h-[25vh] flex items-center justify-center">
               <div>
                 <p className="text-sm text-yellow-600 font-medium">🎬 Серия ещё не вышла</p>
-
                 {currentEpisode.released && (
                   <p className="text-sm text-muted-foreground">
                     Дата релиза:{' '}
@@ -138,17 +144,14 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
         </div>
       )}
 
-      {/* SLIDER НАВИГАЦИИ ПО СЕРИЯМ ВНИЗУ */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Layers size={22} className="text-primary" />
-          <h2 className="text-2xl font-bold">Серии</h2>
-        </div>
+      {/* Слайдер */}
+      {currentSeason && seasons[currentSeason] && (
+        <>
+          <div className="flex items-center gap-2 mb-2">
+            <Layers size={22} className="text-primary" />
+            <h2 className="text-2xl font-bold">Серии</h2>
+          </div>
 
-        {/* Селектор сезона */}
-
-        {/* SLIDER */}
-        {currentSeason && seasons[currentSeason] && (
           <Swiper
             modules={[Navigation]}
             navigation={{ prevEl: '.ep-prev', nextEl: '.ep-next' }}
@@ -190,8 +193,8 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
               )
             })}
           </Swiper>
-        )}
-      </div>
+        </>
+      )}
     </section>
   )
 }

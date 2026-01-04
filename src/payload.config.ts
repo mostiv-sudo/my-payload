@@ -6,20 +6,23 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
+// Коллекции
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
-
-import { en } from './languages/en'
-import { ru } from './languages/ru'
 import { Anime } from './collections/Anime'
 import { Genres } from './collections/Genre'
 import { Studios } from './collections/Studios'
-import { searchPlugin } from '@payloadcms/plugin-search'
 import { Episodes } from './collections/Episodes'
-import { seed } from './endpoint'
 import { Comments } from './collections/Comments'
 import { Bookmarks } from './collections/Bookmarks'
 import { Ratings } from './collections/Ratings'
+
+// Языки
+import { en } from './languages/en'
+import { ru } from './languages/ru'
+
+// Плагины
+import { searchPlugin } from '@payloadcms/plugin-search'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -27,48 +30,45 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     user: Users.slug,
+    // Обязательно указываем путь для importMap
     importMap: {
       baseDir: path.resolve(dirname),
     },
   },
 
   onInit: async (payload) => {
-    if (process.env.SEED === 'upcoming') {
-      await seed(payload)
+    if (process.env.SEED === 'full') {
+      await import('./endpoint').then(({ seed }) => seed(payload))
     }
   },
 
   i18n: {
     fallbackLanguage: 'en',
-
-    supportedLanguages: {
-      en,
-      ru,
-    },
-
-    translations: {
-      en,
-      ru,
-    },
+    supportedLanguages: { en, ru },
+    translations: { en, ru },
   },
+
   collections: [Users, Media, Anime, Genres, Studios, Episodes, Comments, Bookmarks, Ratings],
+
   editor: lexicalEditor(),
+
   secret: process.env.PAYLOAD_SECRET || '',
+
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
+
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
   }),
+
   sharp,
+
   plugins: [
     searchPlugin({
       collections: ['anime'],
-
-      // ✅ ТОЛЬКО поля
-      // поля для поиска и индекса
       searchOverrides: {
         fields: ({ defaultFields }) => [
           ...defaultFields,
@@ -84,7 +84,7 @@ export default buildConfig({
           },
           {
             name: 'type',
-            type: 'text', // select нельзя, поэтому как text
+            type: 'text',
             admin: { readOnly: true },
           },
           {
@@ -94,8 +94,6 @@ export default buildConfig({
           },
         ],
       },
-
-      // перед сохранением в индекс
       beforeSync: ({ originalDoc, searchDoc }) => {
         if (searchDoc.doc.relationTo === 'anime') {
           const normalize = (str = '') =>
@@ -115,8 +113,8 @@ export default buildConfig({
               .filter(Boolean)
               .join(' '),
             slug: originalDoc.slug,
-            type: originalDoc.type, // добавляем type
-            year: originalDoc.year, // добавляем year
+            type: originalDoc.type,
+            year: originalDoc.year,
           }
         }
 

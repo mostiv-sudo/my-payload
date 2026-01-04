@@ -184,9 +184,6 @@ export interface Media {
 export interface Anime {
   id: number;
   title: string;
-  /**
-   * Используется для slug и SEO
-   */
   title_en: string;
   play_link?: string | null;
   year?: number | null;
@@ -194,6 +191,10 @@ export interface Anime {
   poster?: (number | null) | Media;
   poster_url?: string | null;
   rating?: number | null;
+  relatedAnime?: {
+    anime?: (number | null) | Anime;
+    relationType?: ('sequel' | 'spinoff' | 'similar') | null;
+  };
   external_ids?: {
     kinopoisk?: string | null;
     imdb?: string | null;
@@ -262,18 +263,12 @@ export interface Studio {
 export interface Episode {
   id: number;
   anime: number | Anime;
-  /**
-   * Номер сезона, к которому принадлежит эпизод
-   */
   season: number;
   episodeNumber: number;
   title: string;
   description?: string | null;
   released?: string | null;
   duration?: number | null;
-  /**
-   * Прямая ссылка на эпизод с Kodik API
-   */
   videoLink?: string | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -512,6 +507,12 @@ export interface AnimeSelect<T extends boolean = true> {
   poster?: T;
   poster_url?: T;
   rating?: T;
+  relatedAnime?:
+    | T
+    | {
+        anime?: T;
+        relationType?: T;
+      };
   external_ids?:
     | T
     | {

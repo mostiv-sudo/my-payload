@@ -3,23 +3,26 @@ import { slugField } from 'payload'
 
 export const Episodes: CollectionConfig = {
   slug: 'episodes',
+
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'anime', 'season', 'episodeNumber', 'released'],
   },
+
   access: {
     read: () => true,
     create: () => true,
     update: () => true,
     delete: () => true,
   },
+
   fields: [
     {
       name: 'anime',
       type: 'relationship',
       relationTo: 'anime',
-      label: 'Аниме',
       required: true,
+      label: 'Аниме',
     },
     {
       name: 'season',
@@ -27,9 +30,6 @@ export const Episodes: CollectionConfig = {
       label: 'Сезон',
       required: true,
       defaultValue: 1,
-      admin: {
-        description: 'Номер сезона, к которому принадлежит эпизод',
-      },
     },
     {
       name: 'episodeNumber',
@@ -62,10 +62,26 @@ export const Episodes: CollectionConfig = {
       name: 'videoLink',
       type: 'text',
       label: 'Ссылка на видео',
-      admin: {
-        description: 'Прямая ссылка на эпизод с Kodik API',
-      },
     },
+
     slugField({ fieldToUse: 'title' }),
   ],
+
+  hooks: {
+    afterChange: [
+      async ({ doc, req }) => {
+        const payload = req.payload
+
+        if (doc.released && new Date(doc.released) >= new Date()) {
+          await payload.update({
+            collection: 'anime',
+            id: doc.anime,
+            data: {
+              status: 'airing',
+            },
+          })
+        }
+      },
+    ],
+  },
 }

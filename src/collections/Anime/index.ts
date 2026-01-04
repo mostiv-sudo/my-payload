@@ -3,25 +3,21 @@ import { slugField } from 'payload'
 
 export const Anime: CollectionConfig = {
   slug: 'anime',
+
   admin: {
     useAsTitle: 'title',
+    defaultColumns: ['title', 'status', 'completion', 'rating', 'year'],
   },
 
-  // --- Какие поля заполнять автоматически ---
-  /**
-   * Поля, которые автоматически подгружаются
-   * при запросах (важно для листингов)
-   */
   defaultPopulate: {
     slug: true,
     title: true,
     poster: true,
     rating: true,
     minimal_age: true,
+    completion: true,
   },
-  /**
-   * Доступы (позже можно ограничить)
-   */
+
   access: {
     read: () => true,
     create: () => true,
@@ -33,7 +29,7 @@ export const Anime: CollectionConfig = {
     {
       type: 'tabs',
       tabs: [
-        // --- ОСНОВНОЕ ---
+        // ================= ОСНОВНОЕ =================
         {
           label: 'Основное',
           fields: [
@@ -49,15 +45,12 @@ export const Anime: CollectionConfig = {
               required: true,
               unique: true,
               label: 'Название (EN)',
-              admin: {
-                description: 'Используется для slug и SEO',
-              },
             },
             {
               name: 'play_link',
               type: 'text',
               unique: true,
-              label: 'Ссылка на видио',
+              label: 'Ссылка на видео',
             },
             {
               name: 'year',
@@ -65,13 +58,11 @@ export const Anime: CollectionConfig = {
               label: 'Год',
               index: true,
             },
-
             {
               name: 'description',
               type: 'textarea',
               label: 'Описание',
             },
-
             {
               name: 'poster',
               type: 'upload',
@@ -83,6 +74,7 @@ export const Anime: CollectionConfig = {
               type: 'text',
               label: 'Постер URL',
             },
+
             {
               name: 'rating',
               type: 'number',
@@ -93,7 +85,28 @@ export const Anime: CollectionConfig = {
           ],
         },
 
-        // --- СЕКЦИЯ ВНЕШНИХ ID ---
+        {
+          name: 'relatedAnime',
+
+          fields: [
+            {
+              name: 'anime',
+              type: 'relationship',
+              relationTo: 'anime',
+            },
+            {
+              name: 'relationType',
+              type: 'select',
+              options: [
+                { label: 'Продолжение', value: 'sequel' },
+                { label: 'Спин-офф', value: 'spinoff' },
+                { label: 'Похожее', value: 'similar' },
+              ],
+            },
+          ],
+        },
+
+        // ================= ВНЕШНИЕ ID =================
         {
           label: 'Внешние ID',
           fields: [
@@ -110,6 +123,8 @@ export const Anime: CollectionConfig = {
             },
           ],
         },
+
+        // ================= МЕТАДАННЫЕ =================
         {
           label: 'Метаданные',
           fields: [
@@ -180,15 +195,13 @@ export const Anime: CollectionConfig = {
       ],
     },
 
-    // Статус можно вынести в сайдбар
+    // ================= САЙДБАР =================
     {
       name: 'status',
       type: 'select',
       label: 'Статус',
-      admin: {
-        position: 'sidebar',
-      },
       index: true,
+      admin: { position: 'sidebar' },
       defaultValue: 'completed',
       options: [
         { label: 'Анонс', value: 'announced' },
@@ -200,11 +213,45 @@ export const Anime: CollectionConfig = {
       name: 'released',
       type: 'date',
       label: 'Дата релиза',
-      admin: {
-        position: 'sidebar',
-      },
+      admin: { position: 'sidebar' },
     },
 
     slugField({ fieldToUse: 'title_en' }),
   ],
+
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        const requiredFields = ['year', 'description', 'rating', 'minimal_age']
+
+        const relationFields = ['genres', 'studios']
+
+        let total = requiredFields.length + relationFields.length + 1
+        let filled = 0
+        const issues: { code: string }[] = []
+
+        if (data.poster || data.poster_url) filled++
+        else issues.push({ code: 'NO_POSTER' })
+
+        requiredFields.forEach((field) => {
+          if (data[field]) filled++
+          else issues.push({ code: `NO_${field.toUpperCase()}` })
+        })
+
+        relationFields.forEach((field) => {
+          if (Array.isArray(data[field]) && data[field].length > 0) filled++
+          else issues.push({ code: `NO_${field.toUpperCase()}` })
+        })
+
+        if (!data.external_ids?.shikimori) {
+          issues.push({ code: 'NO_SHIKIMORI' })
+        }
+
+        data.completion = Math.round((filled / total) * 100)
+        data.issues = issues
+
+        return data
+      },
+    ],
+  },
 }

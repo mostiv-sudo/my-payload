@@ -9,87 +9,20 @@ import { Fragment } from 'react'
 import { AnimeComments } from '@/components/anime/AnimeComments'
 import { AnimeRatingDialog } from '@/components/anime/AnimeRating'
 import { AnimeBookmark } from '@/components/anime/AnimeBookmark'
+import { getAnime, extractGenreIds, getGenresByIds, statusMap } from '@/lib/animeService'
+import type { Anime as AnimeType, Genre } from '@/lib/types'
 
-const statusMap: Record<string, string> = {
-  announced: 'Анонс',
-  airing: 'Выходит',
-  completed: 'Завершено',
-}
-
-type Genre = {
-  id: number
-  title: string
-  slug: string
-}
-
-type Anime = {
-  id: string
-  title: string
-  title_en?: string
-  poster?: string
-  poster_url?: string
-  rating?: number
-  year?: number
-  type: 'movie' | 'series'
-  status?: string
-  duration?: number
-  episodesCount?: number
-  seasonsCount?: number
-  description?: string
-  genres?: (number | Genre)[]
-  minimal_age: number
-  play_link?: string
-}
-
-// --- Fetch Anime ---
-async function getAnime(slug: string): Promise<Anime | null> {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime?where[slug][equals]=${slug}&depth=1`,
-      { cache: 'no-store' },
-    )
-    if (!res.ok) return null
-    const data = await res.json()
-    return data?.docs?.[0] || null
-  } catch (err) {
-    console.error('Failed to fetch anime:', err)
-    return null
-  }
-}
-
-// --- Genres ---
-function extractGenreIds(genres: (number | Genre)[]): number[] {
-  return genres
-    .map((g) => (typeof g === 'number' ? g : g?.id))
-    .filter((id): id is number => Boolean(id))
-}
-
-async function getGenresByIds(ids: number[]): Promise<Genre[]> {
-  if (!ids?.length) return []
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/genres?where[id][in]=${ids.join(',')}`,
-      { cache: 'no-store' },
-    )
-    if (!res.ok) return []
-    const data = await res.json()
-    return data.docs || []
-  } catch {
-    return []
-  }
-}
-
+// --- generateMetadata ---
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string } | Promise<{ slug: string }>
+  params: Promise<{ slug?: string; id?: number }> | { slug?: string; id?: number }
 }): Promise<Metadata> {
-  const { slug } = await params
-  const anime = await getAnime(slug)
+  const resolvedParams = await params
+  const anime = await getAnime(resolvedParams)
   if (!anime) return {}
 
   const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
-
   return {
     title: anime.title,
     description:
@@ -104,21 +37,22 @@ export async function generateMetadata({
   }
 }
 
-type Params = { params: { slug: string } }
+// --- Page component ---
+type Params = { params: Promise<{ slug?: string; id?: number }> | { slug?: string; id?: number } }
 
 export default async function AnimeDetailsPage({ params }: Params) {
-  const { slug } = await params
-  const anime = await getAnime(slug)
+  const resolvedParams = await params
+  const anime: AnimeType | null = await getAnime(resolvedParams)
   if (!anime) return notFound()
 
-  const genreIds = extractGenreIds(anime.genres || [])
-  const genres = await getGenresByIds(genreIds)
+  const genres: Genre[] = await getGenresByIds(extractGenreIds(anime.genres || []))
 
   return (
     <div className="lg:container mx-auto px-4 py-8 mt-20 space-y-8">
       {/* Карточка аниме */}
       <Card className="relative overflow-hidden rounded-3xl border border-border/60 bg-background/80 dark:bg-background/50 backdrop-blur-md shadow-sm dark:shadow-black/20 hover:shadow-md transition-all">
         <CardContent className="flex flex-col lg:flex-row gap-8 p-6 lg:p-10">
+          {/* Постер */}
           <div className="w-full lg:w-1/3 max-w-sm mx-auto">
             {anime.poster_url ? (
               <Image
@@ -133,8 +67,8 @@ export default async function AnimeDetailsPage({ params }: Params) {
             )}
           </div>
 
+          {/* Контент */}
           <div className="flex-1 space-y-5 text-foreground">
-            {/* Заголовки */}
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold">{anime.title}</h1>
               {anime.title_en && (
@@ -142,7 +76,6 @@ export default async function AnimeDetailsPage({ params }: Params) {
               )}
             </div>
 
-            {/* Средний рейтинг */}
             {anime.rating !== undefined && (
               <div className="flex items-center gap-3">
                 <div className="text-4xl font-black text-yellow-400">{anime.rating}</div>
@@ -150,16 +83,11 @@ export default async function AnimeDetailsPage({ params }: Params) {
               </div>
             )}
 
-            {/* Оценка пользователя */}
-            {anime.id && (
-              <div className="pt-2 flex">
-                <AnimeRatingDialog animeId={anime.id} />
-                {/* Добавляем в карточку аниме */}
-                {anime.id && <AnimeBookmark animeId={anime.id} />}
-              </div>
-            )}
-
-            {/* Добавляем в карточку аниме */}
+            {/* Действия пользователя */}
+            <div className="pt-2 flex gap-2">
+              <AnimeRatingDialog animeId={anime.id as any} />
+              <AnimeBookmark animeId={anime.id as any} />
+            </div>
 
             {/* Основная информация */}
             <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
@@ -167,7 +95,7 @@ export default async function AnimeDetailsPage({ params }: Params) {
                 <span>{anime.year || '—'} год</span>•
                 <span>{anime.type === 'movie' ? 'Фильм' : 'Сериал'}</span>•
                 <span>{anime.status ? statusMap[anime.status] : '—'}</span>
-                {anime.minimal_age !== undefined && (
+                {anime.minimal_age && (
                   <>
                     •<span>{anime.minimal_age}+</span>
                   </>
@@ -209,7 +137,7 @@ export default async function AnimeDetailsPage({ params }: Params) {
               </div>
             )}
 
-            {/* Действия */}
+            {/* Кнопки */}
             <div className="flex flex-wrap gap-3 pt-4">
               <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold">
                 Смотреть
@@ -228,7 +156,7 @@ export default async function AnimeDetailsPage({ params }: Params) {
         </CardContent>
       </Card>
 
-      {/* Видео или эпизоды */}
+      {/* Видео / эпизоды */}
       {anime.type === 'movie' ? (
         anime.play_link ? (
           <div className="mt-8 space-y-3 transition-opacity duration-300">
@@ -246,11 +174,11 @@ export default async function AnimeDetailsPage({ params }: Params) {
           <p className="mt-8 text-muted-foreground">Ссылка на видео отсутствует.</p>
         )
       ) : (
-        anime.id && <EpisodesSlider animeId={anime.id} />
+        <EpisodesSlider animeId={anime.id} />
       )}
 
       {/* Комментарии */}
-      {anime.id && <AnimeComments animeId={anime.id} />}
+      <AnimeComments animeId={anime.id as any} />
 
       {/* Ссылка назад */}
       <Link

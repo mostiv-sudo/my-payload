@@ -66,22 +66,4 @@ export const Episodes: CollectionConfig = {
 
     slugField({ fieldToUse: 'title' }),
   ],
-
-  hooks: {
-    afterChange: [
-      async ({ doc, req }) => {
-        const payload = req.payload
-
-        if (doc.released && new Date(doc.released) >= new Date()) {
-          await payload.update({
-            collection: 'anime',
-            id: doc.anime,
-            data: {
-              status: 'airing',
-            },
-          })
-        }
-      },
-    ],
-  },
 }

@@ -3,7 +3,7 @@ import { Payload } from 'payload'
 import { seedAnime } from './steps/anime.seed'
 import { seedEpisodes } from './steps/episodes/episodes.seed'
 import { seedGenres } from './steps/genres/genres.seed'
-import { seedAddGenreAnime } from './steps/anime-genres.seed'
+import { seedAddGenreAnimeByShikimori } from './steps/anime-genres.seed'
 import { seedUpcomingEpisodes } from './steps/episodes/episodes.upcoming.seed'
 
 type SeedMode = 'anime' | 'episodes' | 'upcoming' | 'genres' | 'add-genres' | 'full'
@@ -31,13 +31,14 @@ export async function seed(payload: Payload) {
         break
 
       case 'add-genres':
-        await seedAddGenreAnime(payload)
+        await seedAddGenreAnimeByShikimori(payload)
         break
 
       case 'full':
         await seedAnime(payload)
         await seedGenres(payload)
-        await seedAddGenreAnime(payload)
+        await seedAddGenreAnimeByShikimori(payload)
+
         await seedEpisodes(payload)
         await seedUpcomingEpisodes(payload)
         break

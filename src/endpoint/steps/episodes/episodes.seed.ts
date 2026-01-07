@@ -1,50 +1,62 @@
-import fs from 'fs'
+import fs from 'fs/promises'
 import path from 'path'
+import pLimit from 'p-limit'
 import { Payload } from 'payload'
 import { mapEpisodesFromJson } from './episodes.mapper'
-import { findAnimeByKodikId, episodeExists, createEpisode } from './episodes.repository'
+import { findAnimeByKodikId, findEpisodesByAnime, createEpisode } from './episodes.repository'
+
+const limit = pLimit(5) // ограничение параллельных create
 
 export async function seedEpisodes(payload: Payload) {
   const filePath = path.join(process.cwd(), 'src/endpoint/data/anime.full.json')
 
-  const raw = fs.readFileSync(filePath, 'utf8')
+  const raw = await fs.readFile(filePath, 'utf8')
   const data = JSON.parse(raw)
 
-  console.log(`📥 Загружено ${data.length} аниме из JSON\n`)
+  console.log(`📥 Загружено ${data.length} аниме\n`)
+
+  let created = 0
+  let skipped = 0
 
   for (const animeJson of data) {
     const animeDoc = await findAnimeByKodikId(payload, animeJson.id)
 
     if (!animeDoc) {
-      console.log(`⏭ Аниме не найдено в БД: ${animeJson.title}`)
+      console.log(`⏭ Не найдено: ${animeJson.title}`)
       continue
     }
 
     const episodes = mapEpisodesFromJson(animeJson)
+    if (!episodes.length) continue
 
-    if (!episodes.length) {
-      console.log(`⚠ Нет эпизодов: ${animeJson.title}`)
-      continue
-    }
+    const existing = await findEpisodesByAnime(payload, String(animeDoc.id))
+
+    const existingSet = new Set(existing.map((e) => `${e.season}:${e.episodeNumber}`))
 
     console.log(`\n🎬 ${animeJson.title}`)
 
-    for (const ep of episodes) {
-      const exists = await episodeExists(payload, String(animeDoc.id), ep.season, ep.episodeNumber)
+    const tasks = episodes.map((ep) =>
+      limit(async () => {
+        const key = `${ep.season}:${ep.episodeNumber}`
 
-      if (exists) {
-        console.log(`⏭ S${ep.season}E${ep.episodeNumber}`)
-        continue
-      }
+        if (existingSet.has(key)) {
+          skipped++
+          console.log(`⏭ S${ep.season}E${ep.episodeNumber}`)
+          return
+        }
 
-      await createEpisode(payload, {
-        ...ep,
-        anime: animeDoc.id,
-      })
+        await createEpisode(payload, {
+          ...ep,
+          anime: animeDoc.id,
+        })
 
-      console.log(`✅ S${ep.season}E${ep.episodeNumber}`)
-    }
+        created++
+        console.log(`✅ S${ep.season}E${ep.episodeNumber}`)
+      }),
+    )
+
+    await Promise.all(tasks)
   }
 
-  console.log('\n🎉 Seed эпизодов завершён')
+  console.log(`\n🎉 Seed завершён: создано ${created}, пропущено ${skipped}`)
 }

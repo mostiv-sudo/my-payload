@@ -7,7 +7,7 @@ type KodikAnime = {
   seasons?: Record<
     string,
     {
-      episodes?: Record<string, string>
+      episodes?: Record<string, string | null | undefined>
     }
   >
 }
@@ -28,21 +28,21 @@ export function mapEpisodesFromJson(anime: KodikAnime): EpisodeSeed[] {
   if (!anime?.seasons) return []
 
   const episodes: EpisodeSeed[] = []
+  const baseSlug = anime.slug?.trim() || anime.id
 
-  for (const [seasonNum, season] of Object.entries(anime.seasons)) {
+  for (const [seasonKey, season] of Object.entries(anime.seasons)) {
     if (!season?.episodes) continue
 
-    for (const [epNum, link] of Object.entries(season.episodes)) {
-      if (!link) continue
+    const seasonNumber = Number(seasonKey)
+    if (Number.isNaN(seasonNumber)) continue
 
-      const seasonNumber = Number(seasonNum)
-      const episodeNumber = Number(epNum)
+    for (const [episodeKey, rawLink] of Object.entries(season.episodes)) {
+      if (!rawLink) continue
 
-      if (Number.isNaN(seasonNumber) || Number.isNaN(episodeNumber)) {
-        continue
-      }
+      const episodeNumber = Number(episodeKey)
+      if (Number.isNaN(episodeNumber)) continue
 
-      const baseSlug = anime.slug ?? anime.id
+      const videoLink = rawLink.startsWith('//') ? `https:${rawLink}` : rawLink
 
       episodes.push({
         animeKodikId: anime.id,
@@ -53,7 +53,7 @@ export function mapEpisodesFromJson(anime: KodikAnime): EpisodeSeed[] {
         duration: anime.duration ?? 0,
         released: null,
         slug: makeSlug(`${baseSlug}-s${seasonNumber}-e${episodeNumber}`),
-        videoLink: link.startsWith('//') ? `https:${link}` : link,
+        videoLink,
       })
     }
   }

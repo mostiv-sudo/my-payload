@@ -1,6 +1,6 @@
 type UpcomingJson = {
-  next_episode: number
-  next_episode_at: string
+  next_episode?: number
+  next_episode_at?: string
   duration?: number
   anime: {
     id: string
@@ -8,8 +8,24 @@ type UpcomingJson = {
   }
 }
 
-export function mapUpcomingEpisode(item: UpcomingJson) {
-  if (!item?.next_episode || !item?.next_episode_at) return null
+type UpcomingEpisodeSeed = {
+  season: number
+  episodeNumber: number
+  title: string
+  description: string
+  released: string
+  duration: number | null
+  videoLink: null
+}
+
+export function mapUpcomingEpisode(item: UpcomingJson): UpcomingEpisodeSeed | null {
+  if (
+    !item?.next_episode ||
+    !item?.next_episode_at ||
+    Number.isNaN(Date.parse(item.next_episode_at))
+  ) {
+    return null
+  }
 
   return {
     season: 1,

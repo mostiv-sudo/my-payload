@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  app:
+    image: node:22-alpine
+    container_name: payload-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/home/node/app
+      - node_modules:/home/node/app/node_modules
+    working_dir: /home/node/app
+    environment:
+      NODE_ENV: development
+    env_file:
+      - .env
+    command: sh -c "
+      npm install -g pnpm && \
+      pnpm install && \
+      SEED=full pnpm dev"
+    depends_on:
+      - postgres
+    networks:
+      - payload-network
+    stdin_open: true   # Чтобы можно было видеть live вывод
+    tty: true          # Поддержка терминала для dev сервера
+    restart: "no"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: payload-postgres
+    environment:
+      POSTGRES_DB: payload
+      POSTGRES_USER: payload
+      POSTGRES_PASSWORD: payload
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - payload-network
+
+volumes:
+  node_modules:
+  pgdata:
+
+networks:
+  payload-network:
+    driver: bridge

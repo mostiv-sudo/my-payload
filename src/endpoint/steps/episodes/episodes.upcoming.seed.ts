@@ -4,40 +4,59 @@ import { Payload } from 'payload'
 import { episodeExists, createEpisode } from './episodes.repository'
 import { mapUpcomingEpisode } from './mapUpcomingEpisode'
 
-export async function findAnimeByShikimoriId2(payload: Payload, shikimoriId: string | number) {
-  const id = String(shikimoriId)
-
+export async function findAnimeByShikimoriId(payload: Payload, shikimoriId: string | number) {
   const res = await payload.find({
     collection: 'anime',
     where: {
       'external_ids.shikimori': {
-        equals: id,
+        equals: String(shikimoriId),
       },
     },
     limit: 1,
   })
 
-  return res.docs[0] ?? null
+  return res.docs?.[0] ?? null
 }
 
 export async function seedUpcomingEpisodes(payload: Payload) {
   const filePath = path.join(process.cwd(), 'src/endpoint/data/calendar.json')
 
-  const raw = fs.readFileSync(filePath, 'utf8')
-  const data = JSON.parse(raw)
+  if (!fs.existsSync(filePath)) {
+    console.warn('⚠ calendar.json не найден')
+    return
+  }
+
+  const data: any[] = JSON.parse(fs.readFileSync(filePath, 'utf8'))
 
   console.log(`📅 Найдено upcoming аниме: ${data.length}\n`)
 
+  let addedCount = 0
+  let skippedCount = 0
+  let notFoundCount = 0
+
   for (const item of data) {
-    const animeDoc = await findAnimeByShikimoriId2(payload, String(item.anime.id))
+    // Пропускаем, если нет anime или id
+    if (!item?.anime?.id) {
+      console.log('⏭ Пропущен элемент без anime.id')
+      skippedCount++
+      continue
+    }
+
+    const animeDoc = await findAnimeByShikimoriId(payload, item.anime.id)
 
     if (!animeDoc) {
-      console.log(`⏭ Аниме не найдено: ${item.anime.name}`)
+      console.log(`⏭ Аниме не найдено: ${item.anime.name ?? item.anime.id}`)
+      notFoundCount++
       continue
     }
 
     const episode = mapUpcomingEpisode(item)
-    if (!episode) continue
+
+    if (!episode) {
+      console.log(`⏭ Эпизод не найден для: ${item.anime.name ?? item.anime.id}`)
+      skippedCount++
+      continue
+    }
 
     const exists = await episodeExists(
       payload,
@@ -47,28 +66,23 @@ export async function seedUpcomingEpisodes(payload: Payload) {
     )
 
     if (exists) {
-      console.log(`⏭ Уже есть E${episode.episodeNumber}`)
+      console.log(`⏭ Уже есть E${episode.episodeNumber} для ${item.anime.name}`)
+      skippedCount++
       continue
     }
 
     await createEpisode(payload, {
       ...episode,
-      anime: animeDoc.id,
+      anime: animeDoc.id, // ✅ только ID
     })
 
-    // 🔥 Если есть upcoming — значит аниме выходит
-    if (animeDoc.status !== 'airing') {
-      await payload.update({
-        collection: 'anime',
-        id: animeDoc.id,
-        data: {
-          status: 'airing',
-        },
-      })
-    }
-
-    console.log(`🕒 Запланирован эпизод E${episode.episodeNumber} (${episode.released})`)
+    addedCount++
+    console.log(
+      `🕒 Добавлен эпизод: ${item.anime.name} — E${episode.episodeNumber} (${episode.released})`,
+    )
   }
 
-  console.log('\n✅ Upcoming эпизоды добавлены')
+  console.log(
+    `\n✅ Итог: Добавлено: ${addedCount}, Пропущено: ${skippedCount}, Аниме не найдено: ${notFoundCount}`,
+  )
 }

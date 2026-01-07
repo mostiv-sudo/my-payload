@@ -191,10 +191,6 @@ export interface Anime {
   poster?: (number | null) | Media;
   poster_url?: string | null;
   rating?: number | null;
-  relatedAnime?: {
-    anime?: (number | null) | Anime;
-    relationType?: ('sequel' | 'spinoff' | 'similar') | null;
-  };
   external_ids?: {
     kinopoisk?: string | null;
     imdb?: string | null;
@@ -507,12 +503,6 @@ export interface AnimeSelect<T extends boolean = true> {
   poster?: T;
   poster_url?: T;
   rating?: T;
-  relatedAnime?:
-    | T
-    | {
-        anime?: T;
-        relationType?: T;
-      };
   external_ids?:
     | T
     | {

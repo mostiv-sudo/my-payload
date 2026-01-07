@@ -38,3 +38,15 @@ export async function createEpisode(payload: Payload, data: any) {
     draft: false,
   })
 }
+
+export async function findEpisodesByAnime(payload: Payload, animeId: string) {
+  const res = await payload.find({
+    collection: 'episodes',
+    where: {
+      anime: { equals: animeId },
+    },
+    limit: 10000,
+  })
+
+  return res.docs
+}

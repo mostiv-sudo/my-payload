@@ -85,27 +85,6 @@ export const Anime: CollectionConfig = {
           ],
         },
 
-        {
-          name: 'relatedAnime',
-
-          fields: [
-            {
-              name: 'anime',
-              type: 'relationship',
-              relationTo: 'anime',
-            },
-            {
-              name: 'relationType',
-              type: 'select',
-              options: [
-                { label: 'Продолжение', value: 'sequel' },
-                { label: 'Спин-офф', value: 'spinoff' },
-                { label: 'Похожее', value: 'similar' },
-              ],
-            },
-          ],
-        },
-
         // ================= ВНЕШНИЕ ID =================
         {
           label: 'Внешние ID',
@@ -222,33 +201,11 @@ export const Anime: CollectionConfig = {
   hooks: {
     beforeChange: [
       ({ data }) => {
-        const requiredFields = ['year', 'description', 'rating', 'minimal_age']
-
-        const relationFields = ['genres', 'studios']
-
-        let total = requiredFields.length + relationFields.length + 1
-        let filled = 0
-        const issues: { code: string }[] = []
-
-        if (data.poster || data.poster_url) filled++
-        else issues.push({ code: 'NO_POSTER' })
-
-        requiredFields.forEach((field) => {
-          if (data[field]) filled++
-          else issues.push({ code: `NO_${field.toUpperCase()}` })
-        })
-
-        relationFields.forEach((field) => {
-          if (Array.isArray(data[field]) && data[field].length > 0) filled++
-          else issues.push({ code: `NO_${field.toUpperCase()}` })
-        })
-
-        if (!data.external_ids?.shikimori) {
-          issues.push({ code: 'NO_SHIKIMORI' })
+        // ===================== АВТО-МЕНЯЕМ СТАТУС =====================
+        // ========= Фильмы =========
+        if (data.type === 'movie' && data.play_link) {
+          data.status = 'completed'
         }
-
-        data.completion = Math.round((filled / total) * 100)
-        data.issues = issues
 
         return data
       },

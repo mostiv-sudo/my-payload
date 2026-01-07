@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -20,11 +20,11 @@ type Genre = {
 }
 
 // -----------------------------
-// Хук для работы с фильтрами через URL (SSR safe)
+// Хук для работы с фильтрами через URL
 // -----------------------------
 function useFilters(basePath: string) {
   const router = useRouter()
-  const pathname = usePathname()
+  const pathname = usePathname() || '/'
   const searchParams = useSearchParams()
 
   const params = useMemo(() => {
@@ -43,26 +43,27 @@ function useFilters(basePath: string) {
     return obj
   }, [searchParams])
 
-  const setParam = (key: string, value?: string | string[]) => {
-    const search = new URLSearchParams(searchParams.toString())
+  const setParam = useCallback(
+    (key: string, value?: string | string[]) => {
+      const search = new URLSearchParams(searchParams.toString())
 
-    if (value === undefined || (Array.isArray(value) && value.length === 0)) {
-      search.delete(key)
-    } else {
-      search.set(key, Array.isArray(value) ? value.join(',') : value)
-    }
+      if (value === undefined || (Array.isArray(value) && value.length === 0)) {
+        search.delete(key)
+      } else {
+        search.set(key, Array.isArray(value) ? value.join(',') : value)
+      }
 
-    // Сбрасываем страницу на 1 при изменении любого фильтра кроме page
-    if (key !== 'page') {
-      search.set('page', '1')
-    }
+      // Сбрасываем страницу на 1 при изменении любого фильтра кроме page
+      if (key !== 'page') search.set('page', '1')
 
-    router.replace(`${pathname}?${search.toString()}`)
-  }
+      router.replace(`${pathname}?${search.toString()}`)
+    },
+    [router, pathname, searchParams],
+  )
 
-  const resetParams = () => {
+  const resetParams = useCallback(() => {
     router.replace(basePath)
-  }
+  }, [router, basePath])
 
   return { params, setParam, resetParams }
 }
@@ -90,10 +91,17 @@ export function FilterSidebar({ basePath, type }: { basePath: string; type?: 'mo
   // Загружаем все жанры
   // -----------------------------
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/genres?limit=1000`, { cache: 'no-store' })
+    const controller = new AbortController()
+    fetch(`${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/genres?limit=1000`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
       .then((r) => r.json())
       .then((d) => setGenres(d.docs))
-      .catch(console.error)
+      .catch((err) => {
+        if (err.name !== 'AbortError') console.error(err)
+      })
+    return () => controller.abort()
   }, [])
 
   // -----------------------------
@@ -109,14 +117,17 @@ export function FilterSidebar({ basePath, type }: { basePath: string; type?: 'mo
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const toggleGenre = (slug: string) => {
-    const next = selectedGenres.includes(slug)
-      ? selectedGenres.filter((g) => g !== slug)
-      : [...selectedGenres, slug]
-    setQuery('')
-    setIsOpen(false)
-    setParam('genre', next.length ? next : undefined)
-  }
+  const toggleGenre = useCallback(
+    (slug: string) => {
+      const next = selectedGenres.includes(slug)
+        ? selectedGenres.filter((g) => g !== slug)
+        : [...selectedGenres, slug]
+      setQuery('')
+      setIsOpen(false)
+      setParam('genre', next.length ? next : undefined)
+    },
+    [selectedGenres, setParam],
+  )
 
   const suggestions = useMemo(
     () =>
@@ -130,7 +141,7 @@ export function FilterSidebar({ basePath, type }: { basePath: string; type?: 'mo
   return (
     <aside
       ref={ref}
-      className="w-full md:w-72 flex-shrink-0 p-6 rounded-2xl border border-border/60 bg-background/70 backdrop-blur shadow-sm sticky top-24 space-y-6 "
+      className="w-full md:w-72 flex-shrink-0 p-6 rounded-2xl border border-border/60 bg-background/70 backdrop-blur shadow-sm sticky top-24 space-y-6"
     >
       <h3 className="text-lg font-semibold flex justify-between items-center">
         Фильтры

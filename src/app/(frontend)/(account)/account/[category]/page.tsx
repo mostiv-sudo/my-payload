@@ -1,23 +1,18 @@
 import { headers as getHeaders } from 'next/headers'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import Link from 'next/link'
-import Image from 'next/image'
 
-import { Card } from '@/components/ui/card'
-import { Star, Bookmark as BookmarkIcon, Eye } from 'lucide-react'
 import { AccountAnimeCard } from '@/components/accaunt/AccountAnimeCard'
 
 type Props = {
-  params: { category: 'ratings' | 'bookmarks' }
-  searchParams: { page?: string }
+  params: Promise<{ category: 'ratings' | 'bookmarks' }>
+  searchParams: Promise<{ page?: string }>
 }
 
-export default async function AccountCategoryPage(props: Props) {
-  const params = await Promise.resolve(props.params)
-  const searchParams = await Promise.resolve(props.searchParams)
-  const category = params.category
-  const page = Number(searchParams.page ?? 1)
+export default async function AccountCategoryPage({ params, searchParams }: Props) {
+  const { category } = await params
+  const { page: pageStr } = await searchParams
+  const page = Number(pageStr ?? 1)
 
   const headers = await getHeaders()
   const payload = await getPayload({ config: configPromise })
@@ -38,7 +33,7 @@ export default async function AccountCategoryPage(props: Props) {
     sort: '-createdAt',
     page,
     limit: 12,
-    depth: 2, // важно: anime подтягивается целиком
+    depth: 2, // anime подтягивается целиком
   })
 
   return (

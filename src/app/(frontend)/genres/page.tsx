@@ -1,18 +1,28 @@
-// app/genres/page.tsx
 import Link from 'next/link'
 import { getGenres } from '@/lib/getGenres'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { ArrowRight } from 'lucide-react'
 
+export const dynamic = 'force-dynamic' // полностью серверная страница
+
+export type Genre = {
+  id: number
+  title: string
+  slug: string
+  description?: string
+}
+
 export default async function GenresPage() {
+  // 1️⃣ Загружаем жанры на сервере
   const genres = await getGenres()
 
+  // 2️⃣ Рендерим страницу
   return (
     <div className="py-8 px-4 md:px-8 container">
       <h1 className="text-3xl font-bold mb-6">Жанры</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {genres.map((genre: any) => (
+        {genres.map((genre: Genre) => (
           <Link key={genre.id} href={`/genres/${genre.slug}`} className="group">
             <Card className="hover:scale-105 transform transition duration-300 ease-out cursor-pointer shadow-md">
               <CardHeader>

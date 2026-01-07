@@ -5,11 +5,12 @@ import { FilterSidebar } from '@/components/filters/FilterSidebar'
 import { SortSelect } from '@/components/filters/SortSelect'
 import { MediaGrid } from '@/components/MediaGrid'
 import { Pagination } from '@/components/Pagination'
+import type { MediaItem } from '@/lib/types'
 
 type Props = {
   title: string
   basePath: string
-  items: any[]
+  items: MediaItem[]
   page: number
   totalPages: number
   limit: number
@@ -30,16 +31,16 @@ export function MediaPageLayout({
   type,
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
-  const [displayItems, setDisplayItems] = useState(items)
+  const [displayItems, setDisplayItems] = useState<MediaItem[]>(items)
 
-  // Обновление элементов при смене сортировки
+  // Обновление отображаемых элементов при изменении items (например, смена страницы или фильтров)
   useEffect(() => {
     setIsLoading(true)
 
     const timeout = setTimeout(() => {
       setDisplayItems(items)
       setIsLoading(false)
-    }, 400) // небольшая задержка для плавного эффекта
+    }, 300) // задержка для плавного перехода
 
     return () => clearTimeout(timeout)
   }, [items])
@@ -47,16 +48,20 @@ export function MediaPageLayout({
   return (
     <div className="container mx-auto py-10 min-h-[70vh]">
       <div className="flex flex-col md:flex-row gap-6">
+        {/* Sidebar с фильтрами */}
         <aside className="w-full md:w-72 flex-shrink-0">
           <FilterSidebar basePath={basePath} type={type} />
         </aside>
 
+        {/* Основной контент */}
         <main className="flex-1 flex flex-col gap-6">
+          {/* Заголовок и сортировка */}
           <header className="flex flex-wrap gap-4 items-center justify-between">
             <h1 className="text-3xl font-bold">{title}</h1>
             <SortSelect basePath={basePath} value={sort} />
           </header>
 
+          {/* Сетка с элементами */}
           <MediaGrid
             items={displayItems}
             showRating={showRating}
@@ -64,6 +69,7 @@ export function MediaPageLayout({
             limit={limit}
           />
 
+          {/* Пагинация */}
           {totalPages > 1 && (
             <div className="flex justify-center pt-4">
               <Pagination page={page} totalPages={totalPages} limit={limit} />

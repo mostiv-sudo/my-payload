@@ -28,6 +28,17 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
   const searchParams = useSearchParams()
   const router = useRouter()
 
+  // --- Форматирование даты ---
+  const formatDate = useCallback((iso?: string) => {
+    if (!iso) return 'Дата неизвестна'
+    const date = new Date(iso)
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  }, [])
+
   // --- Группировка по сезонам ---
   const seasons = useMemo(() => {
     const map: Record<number, Episode[]> = {}
@@ -40,12 +51,13 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
 
   // --- Загрузка эпизодов ---
   useEffect(() => {
+    const controller = new AbortController()
     const fetchEpisodes = async () => {
       setLoading(true)
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/episodes?where[anime][equals]=${animeId}&limit=1000`,
-          { cache: 'no-store' },
+          { cache: 'no-store', signal: controller.signal },
         )
         const data = await res.json()
         const sorted: Episode[] = (data.docs || []).sort((a: Episode, b: Episode) =>
@@ -64,12 +76,13 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
           )
         }
       } catch (err) {
-        console.error('Failed to fetch episodes', err)
+        if ((err as any).name !== 'AbortError') console.error('Failed to fetch episodes', err)
       } finally {
         setLoading(false)
       }
     }
     fetchEpisodes()
+    return () => controller.abort()
   }, [animeId, searchParams])
 
   // --- Изменение эпизода ---
@@ -97,22 +110,6 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
     )
 
   if (!episodes.length) return <p className="mt-8 text-muted-foreground">Серии отсутствуют.</p>
-
-  function formatDate(iso?: string, withTime = true) {
-    if (!iso) return 'Дата неизвестна'
-
-    const date = new Date(iso)
-
-    return date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      ...(withTime && {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    })
-  }
 
   return (
     <section className="mt-12 space-y-6">
@@ -145,13 +142,7 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
                 {currentEpisode.released && (
                   <p className="text-sm text-muted-foreground">
                     Дата релиза:{' '}
-                    <span className="font-medium">
-                      {new Date(currentEpisode.released).toLocaleDateString('ru-RU', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </span>
+                    <span className="font-medium">{formatDate(currentEpisode.released)}</span>
                   </p>
                 )}
               </div>
@@ -170,7 +161,7 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
 
           <Swiper
             modules={[Navigation]}
-            navigation={{ prevEl: '.ep-prev', nextEl: '.ep-next' }}
+            navigation
             spaceBetween={14}
             slidesPerView={2}
             breakpoints={{

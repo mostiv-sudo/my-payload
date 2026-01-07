@@ -1,32 +1,15 @@
 import React from 'react'
 import './styles.css'
-import { Inter as FontSans } from 'next/font/google'
-import { cn } from '@/lib/utils'
-
+import { Suspense } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/providers/Auth'
 
-export const metadata = {
-  title: 'Payload Blank Template',
-  description: 'A blank template using Payload in a Next.js app.',
-}
-
-const fontSans = FontSans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-})
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={cn(
-          'min-h-screen bg-background text-foreground antialiased font-sans',
-          fontSans.variable,
-        )}
-      >
+      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
         <AuthProvider>
           <ThemeProvider
             attribute="class"
@@ -34,7 +17,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             enableSystem
             disableTransitionOnChange
           >
-            <Header />
+            {/* Здесь оборачиваем Header */}
+            <Suspense fallback={<div>Loading header…</div>}>
+              <Header />
+            </Suspense>
 
             <main className="pt-20 mx-auto">{children}</main>
 

@@ -1,8 +1,7 @@
-// hooks/useSearchManager.ts
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { mapSearchDocs, type SearchDoc } from '@/lib/mapSearchDocs'
 import { MediaItem } from '@/lib/types'
 
@@ -10,12 +9,13 @@ const LIMIT = 12
 const MIN_QUERY_LENGTH = 2
 const DEBOUNCE_DELAY = 600
 
-export function useSearchManager() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+type UseSearchManagerProps = {
+  initialQ: string
+  initialPage: number
+}
 
-  const initialQ = searchParams.get('q') ?? ''
-  const initialPage = Number(searchParams.get('page') ?? 1)
+export function useSearchManager({ initialQ, initialPage }: UseSearchManagerProps) {
+  const router = useRouter()
 
   const [q, setQ] = useState(initialQ)
   const [items, setItems] = useState<MediaItem[]>([])
@@ -24,10 +24,12 @@ export function useSearchManager() {
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(false)
 
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
+
   // ---- Update URL ----
   const updateUrl = useCallback(
     (next: { q?: string; page?: number }) => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(window.location.search)
 
       if (next.q !== undefined) {
         next.q ? params.set('q', next.q) : params.delete('q')
@@ -40,7 +42,7 @@ export function useSearchManager() {
 
       router.replace(`?${params.toString()}`, { scroll: false })
     },
-    [router, searchParams],
+    [router],
   )
 
   // ---- Fetch Data ----
@@ -51,12 +53,15 @@ export function useSearchManager() {
 
     try {
       const res = await fetch(
-        `/api/search?where[searchTitle][like]=${encodeURIComponent(query)}&page=${pageToLoad}&limit=${LIMIT}`,
+        `/api/search?where[searchTitle][like]=${encodeURIComponent(
+          query,
+        )}&page=${pageToLoad}&limit=${LIMIT}`,
       )
       const json = await res.json()
+
       const mapped: MediaItem[] = mapSearchDocs(json.docs as SearchDoc[]).map((item) => ({
         ...item,
-        description: item.description ?? '', // добавляем обязательное поле
+        description: item.description ?? '',
       }))
 
       setItems((prev) => (replace ? mapped : [...prev, ...mapped]))
@@ -70,16 +75,17 @@ export function useSearchManager() {
     }
   }, [])
 
-  // ---- URL → DATA (Initial load) ----
+  // ---- Initial load ----
   useEffect(() => {
     if (q.trim().length >= MIN_QUERY_LENGTH) {
       fetchData(q, initialPage, true)
     } else {
       setItems([])
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ---- INPUT → URL → DATA (Debounce) ----
+  // ---- Input → URL → DATA (Debounce) ----
   useEffect(() => {
     if (q.trim().length < MIN_QUERY_LENGTH) {
       updateUrl({ q: '' })
@@ -87,12 +93,16 @@ export function useSearchManager() {
       return
     }
 
-    const t = setTimeout(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    debounceRef.current = setTimeout(() => {
       updateUrl({ q })
       fetchData(q, 1, true)
     }, DEBOUNCE_DELAY)
 
-    return () => clearTimeout(t)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
   }, [q, fetchData, updateUrl])
 
   // ---- Load more ----

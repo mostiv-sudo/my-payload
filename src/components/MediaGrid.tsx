@@ -3,17 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-
-export type MediaItem = {
-  id: string
-  slug: string
-  poster?: string
-  poster_url?: string
-  title: string
-  type?: 'movie' | 'series'
-  year?: number
-  rating?: number
-}
+import type { MediaItem } from '@/lib/types' // <- импортируем единственный тип
 
 type ColsConfig = {
   base?: number
@@ -28,7 +18,7 @@ type Props = {
   showRating?: boolean
   limit?: number
   isLoading?: boolean
-  cols?: number | ColsConfig // можно передавать число или объект для адаптивной сетки
+  cols?: number | ColsConfig
 }
 
 export function MediaGrid({
@@ -48,15 +38,14 @@ export function MediaGrid({
     return () => clearTimeout(timeout)
   }, [items, limit])
 
-  // Генерируем классы для сетки
   const getGridClasses = () => {
     if (typeof cols === 'number') return `grid-cols-${cols}`
     return [
       cols.base ? `grid-cols-${cols.base}` : '',
       cols.sm ? `sm:grid-cols-${cols.sm}` : '',
-      cols.md ? `md:grid-cols-5` : '',
-      cols.lg ? `lg:grid-cols-6` : '',
-      cols.xl ? `xl:grid-cols-7` : '',
+      cols.md ? `md:grid-cols-${cols.md}` : '',
+      cols.lg ? `lg:grid-cols-${cols.lg}` : '',
+      cols.xl ? `xl:grid-cols-${cols.xl}` : '',
     ]
       .filter(Boolean)
       .join(' ')

@@ -1,17 +1,19 @@
-'use client'
+// app/logout/LogoutClient.tsx
+'use client' // обязательно для хуков и useState/useEffect
 
 import { useAuth } from '@/providers/Auth'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Loader2, LogOut } from 'lucide-react'
 
-export const LogoutPage: React.FC = () => {
-  const { logout } = useAuth()
+type Status = 'loading' | 'success' | 'error'
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [message, setMessage] = useState<string>('Выход из аккаунта…')
+export default function LogoutClient() {
+  const { logout } = useAuth()
+  const [status, setStatus] = useState<Status>('loading')
+  const [message, setMessage] = useState('Выход из аккаунта…')
 
   useEffect(() => {
     const performLogout = async () => {
@@ -30,14 +32,10 @@ export const LogoutPage: React.FC = () => {
 
   return (
     <div className="container min-h-[70vh] flex items-center justify-center">
-      <Card className="max-w-md w-full border border-border/60 bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/50 shadow-sm transition-all">
+      <Card className="max-w-md w-full border border-border/60 bg-background/70 backdrop-blur-md shadow-sm">
         <CardContent className="p-8 text-center space-y-6">
           {status === 'loading' && (
-            <div
-              className="flex flex-col items-center gap-4 text-muted-foreground"
-              role="status"
-              aria-live="polite"
-            >
+            <div className="flex flex-col items-center gap-4 text-muted-foreground">
               <Loader2 className="animate-spin" size={32} />
               <p>{message}</p>
             </div>
@@ -47,7 +45,7 @@ export const LogoutPage: React.FC = () => {
             <>
               <div className="flex flex-col items-center gap-3">
                 <LogOut
-                  className={`text-${status === 'success' ? 'primary' : 'destructive'}`}
+                  className={status === 'success' ? 'text-primary' : 'text-destructive'}
                   size={36}
                 />
                 <h1
@@ -58,12 +56,12 @@ export const LogoutPage: React.FC = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                <Button asChild className="transition-colors duration-200">
+                <Button asChild>
                   <Link href="/anime">Перейти к аниме</Link>
                 </Button>
 
                 {status === 'success' && (
-                  <Button variant="outline" asChild className="transition-colors duration-200">
+                  <Button variant="outline" asChild>
                     <Link href="/login">Войти снова</Link>
                   </Button>
                 )}

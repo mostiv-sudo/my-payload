@@ -16,7 +16,7 @@ import type { Anime as AnimeType, Genre } from '@/lib/types'
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug?: string; id?: number }> | { slug?: string; id?: number }
+  params: Promise<{ slug?: string; id?: number }>
 }): Promise<Metadata> {
   const resolvedParams = await params
   const anime = await getAnime(resolvedParams)
@@ -38,9 +38,11 @@ export async function generateMetadata({
 }
 
 // --- Page component ---
-type Params = { params: Promise<{ slug?: string; id?: number }> | { slug?: string; id?: number } }
+type Props = {
+  params: Promise<{ slug?: string; id?: number }>
+}
 
-export default async function AnimeDetailsPage({ params }: Params) {
+export default async function AnimeDetailsPage({ params }: Props) {
   const resolvedParams = await params
   const anime: AnimeType | null = await getAnime(resolvedParams)
   if (!anime) return notFound()

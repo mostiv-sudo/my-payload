@@ -24,7 +24,7 @@ export async function resolveGenreIds(slugs: string[]): Promise<number[]> {
   }
 
   const data = await res.json()
-  return Array.isArray(data.docs) ? data.docs.map((d: any) => d.id) : []
+  return Array.isArray(data.docs) ? data.docs.map((d: any) => d.id as number) : []
 }
 
 /**
@@ -38,6 +38,7 @@ export async function getMedia({
 }: Params): Promise<{ items: MediaItem[]; totalPages: number }> {
   const params = new URLSearchParams()
 
+  // Соответствие SortType API
   const sortMap: Record<SortType, string> = {
     rating_desc: '-rating',
     rating_asc: 'rating',
@@ -75,7 +76,10 @@ export async function getMedia({
     throw new Error(`Ошибка загрузки данных: ${res.status} ${res.statusText}. ${text}`)
   }
 
-  const data = await res.json()
+  const data: {
+    docs?: MediaItem[]
+    totalPages?: number
+  } = await res.json()
 
   return {
     items: Array.isArray(data.docs) ? data.docs : [],
@@ -86,7 +90,7 @@ export async function getMedia({
 /**
  * Получение одного аниме по slug
  */
-export async function getAnimeBySlug(slug: string): Promise<Anime | null> {
+export async function getAnimeBySlug(slug: string | null | undefined): Promise<Anime | null> {
   if (!slug) return null
 
   const url = new URL(`${process.env.NEXT_PUBLIC_PAYLOAD_URL}/api/anime`)
@@ -96,6 +100,6 @@ export async function getAnimeBySlug(slug: string): Promise<Anime | null> {
   const res = await fetch(url.toString(), { cache: 'no-store' })
   if (!res.ok) return null
 
-  const data = await res.json()
-  return data?.docs?.[0] || null
+  const data: { docs?: Anime[] } = await res.json()
+  return data.docs?.[0] || null
 }

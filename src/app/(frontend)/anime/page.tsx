@@ -1,52 +1,51 @@
-// app/anime/page.tsx
-
-import { getAnime } from '@/lib/getAnime'
 import { MediaPageLayout } from '@/components/layouts/MediaPageLayout'
+import { getAnime } from '@/lib/getAnime'
 import { toNumber, parseGenres } from '@/lib/query'
-import type { SearchParams } from '@/lib/types'
+import type { SearchParams, MediaStatus, AnimeFilters, SortType } from '@/lib/types'
 
-/**
- * Нормализует searchParams из URL в удобную и типобезопасную форму.
- * Позволяет держать page-компонент максимально простым и читаемым.
- */
-function parseAnimeSearchParams(params: SearchParams) {
+export const dynamic = 'force-dynamic' // полностью серверная страница
+
+export interface AnimeSearchParams {
+  sort: SortType
+  page: number
+  limit: number
+  genreSlugs: string[]
+  age?: number
+  type?: 'movie' | 'series'
+  status?: MediaStatus
+}
+
+function parseAnimeSearchParams(params: SearchParams): AnimeSearchParams {
+  const type = params.type === 'movie' || params.type === 'series' ? params.type : undefined
+
   return {
-    // Сортировка по умолчанию
-    sort: params.sort ?? 'rating_desc',
-
-    // Пагинация с безопасным приведением типов
+    sort: (params.sort ?? 'rating_desc') as SortType,
     page: toNumber(params.page, 1),
     limit: toNumber(params.limit, 24),
-
-    // Фильтры
-    genreSlugs: parseGenres(params.genre),
-    age: params.age ? Number(params.age) : undefined,
-    type: params.type,
-    status: params.status,
+    genreSlugs: parseGenres(params.genre).map(String), // строго string[]
+    age: params.age !== undefined ? Number(params.age) : undefined,
+    type,
+    status: params.status as MediaStatus | undefined,
   }
 }
 
-export default async function AnimePage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  /**
-   * Получаем и нормализуем параметры из URL
-   */
-  const params = parseAnimeSearchParams(await searchParams)
+interface AnimePageProps {
+  searchParams: Promise<SearchParams>
+}
 
-  /**
-   * Формируем объект фильтров.
-   * Поля добавляются условно, чтобы в getAnime
-   * не попадали undefined-значения.
-   */
-  const filters = {
+export default async function AnimePage({ searchParams }: AnimePageProps) {
+  const resolvedSearchParams = await searchParams
+  const params = parseAnimeSearchParams(resolvedSearchParams)
+
+  // Строго типизированные фильтры для getAnime
+  const filters: AnimeFilters = {
     ...(params.genreSlugs.length > 0 && { genres: params.genreSlugs }),
     ...(params.age !== undefined && { age: params.age }),
     ...(params.type && { type: params.type }),
     ...(params.status && { status: params.status }),
   }
 
-  /**
-   * Загружаем список аниме с учётом фильтров, сортировки и пагинации
-   */
+  // Получаем данные
   const { items, totalPages } = await getAnime({
     sort: params.sort,
     page: params.page,
@@ -54,9 +53,6 @@ export default async function AnimePage({ searchParams }: { searchParams: Promis
     filters,
   })
 
-  /**
-   * Рендерим универсальный layout для медиа-каталогов
-   */
   return (
     <MediaPageLayout
       title="Каталог аниме"
@@ -66,6 +62,7 @@ export default async function AnimePage({ searchParams }: { searchParams: Promis
       totalPages={totalPages}
       limit={params.limit}
       sort={params.sort}
+      type={params.type} // строго 'movie' | 'series' | undefined
     />
   )
 }

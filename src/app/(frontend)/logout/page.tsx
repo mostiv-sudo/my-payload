@@ -1,19 +1,11 @@
-import type { Metadata } from 'next'
+// app/logout/page.tsx
+import LogoutClient from './LogoutClient'
+import { Suspense } from 'react'
 
-import React from 'react'
-
-import { LogoutPage } from './LogoutPage'
-
-export default async function Logout() {
+export default function LogoutPageWrapper() {
   return (
-    <div className="container max-w-lg my-16">
-      <LogoutPage />
-    </div>
+    <Suspense fallback={<div>Загрузка...</div>}>
+      <LogoutClient />
+    </Suspense>
   )
-}
-
-export const metadata: Metadata = {
-  description: 'You have been logged out.',
-
-  title: 'Logout',
 }

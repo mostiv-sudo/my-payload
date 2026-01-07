@@ -4,6 +4,8 @@ import { getWeekDates } from '@/lib/getWeekDates'
 import Link from 'next/link'
 import clsx from 'clsx'
 
+export const dynamic = 'force-dynamic' // ✅ полностью серверная страница
+
 export default async function CalendarPage() {
   const today = new Date()
   const todayISO = today.toISOString().slice(0, 10)
@@ -11,8 +13,10 @@ export default async function CalendarPage() {
   const to = new Date(today)
   to.setDate(today.getDate() + 7)
 
+  // Получаем все эпизоды на неделю
   const episodes = await getEpisodesCalendar(todayISO, to.toISOString().slice(0, 10))
 
+  // Группируем по дате релиза
   const grouped = groupEpisodesByDate(episodes)
   const weekDates = getWeekDates()
 
@@ -36,7 +40,7 @@ export default async function CalendarPage() {
             <section
               key={date}
               className={clsx(
-                'rounded-2xl border p-5 space-y-4',
+                'rounded-2xl border p-5 space-y-4 transition-colors',
                 isToday ? 'border-primary/60 bg-primary/5' : 'bg-card',
               )}
             >
@@ -74,10 +78,8 @@ export default async function CalendarPage() {
                       <Link
                         key={ep.id}
                         href={`/anime/${ep.anime?.slug}`}
-                        className="group flex gap-4 rounded-xl border bg-background p-4 transition
-                          hover:shadow-md hover:-translate-y-0.5"
+                        className="group flex gap-4 rounded-xl border bg-background p-4 transition hover:shadow-md hover:-translate-y-0.5"
                       >
-                        {/* POSTER */}
                         {ep.anime?.poster_url && (
                           <img
                             src={ep.anime.poster_url}

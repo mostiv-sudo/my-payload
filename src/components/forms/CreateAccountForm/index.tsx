@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -21,42 +20,46 @@ type FormData = {
 
 export const CreateAccountForm: React.FC = () => {
   const searchParams = useSearchParams()
-  const allParams = searchParams.toString() ? `?${searchParams.toString()}` : ''
   const { login } = useAuth()
   const router = useRouter()
 
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<null | string>(null)
+  const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
   const {
-    formState: { errors },
-    handleSubmit,
     register,
+    handleSubmit,
     watch,
+    formState: { errors },
   } = useForm<FormData>()
 
   const password = watch('password')
 
-  const passwordStrength =
-    password?.length >= 10 ? 'strong' : password?.length >= 6 ? 'medium' : 'weak'
+  const passwordStrength = password
+    ? password.length >= 10
+      ? 'strong'
+      : password.length >= 6
+        ? 'medium'
+        : 'weak'
+    : null
 
   const onSubmit = useCallback(
     async (data: FormData) => {
       setLoading(true)
       setError(null)
 
-      const { passwordConfirm, ...payloadData } = data
+      const { passwordConfirm, ...payload } = data
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payloadData),
+          body: JSON.stringify(payload),
         })
 
-        if (!response.ok) {
-          const json = await response.json().catch(() => null)
+        if (!res.ok) {
+          const json = await res.json().catch(() => null)
           throw new Error(json?.errors?.[0]?.message || 'Не удалось создать аккаунт')
         }
 
@@ -64,8 +67,8 @@ export const CreateAccountForm: React.FC = () => {
 
         const redirect = searchParams.get('redirect')
         router.push(redirect ?? `/account?success=${encodeURIComponent('Аккаунт успешно создан')}`)
-      } catch (e: any) {
-        setError(e.message)
+      } catch (err: any) {
+        setError(err.message || 'Не удалось создать аккаунт')
       } finally {
         setLoading(false)
       }
@@ -75,7 +78,7 @@ export const CreateAccountForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Message error={error} />
+      {error && <Message error={error} />}
 
       {/* EMAIL */}
       <FormItem>
@@ -92,7 +95,6 @@ export const CreateAccountForm: React.FC = () => {
       {/* PASSWORD */}
       <FormItem>
         <Label htmlFor="password">Пароль</Label>
-
         <div className="relative">
           <Input
             id="password"
@@ -102,29 +104,24 @@ export const CreateAccountForm: React.FC = () => {
               minLength: { value: 6, message: 'Минимум 6 символов' },
             })}
           />
-
           <button
             type="button"
-            onClick={() => setShowPassword((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowPassword((v) => !v)}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
 
-        {/* STRENGTH */}
-        {password && (
+        {passwordStrength && (
           <p
-            className={`
-              text-xs mt-2
-              ${
-                passwordStrength === 'strong'
-                  ? 'text-emerald-500'
-                  : passwordStrength === 'medium'
-                    ? 'text-yellow-500'
-                    : 'text-red-500'
-              }
-            `}
+            className={`text-xs mt-2 ${
+              passwordStrength === 'strong'
+                ? 'text-emerald-500'
+                : passwordStrength === 'medium'
+                  ? 'text-yellow-500'
+                  : 'text-red-500'
+            }`}
           >
             {passwordStrength === 'strong' && 'Надёжный пароль'}
             {passwordStrength === 'medium' && 'Средняя надёжность'}
@@ -135,7 +132,7 @@ export const CreateAccountForm: React.FC = () => {
         {errors.password && <FormError message={errors.password.message} />}
       </FormItem>
 
-      {/* CONFIRM */}
+      {/* CONFIRM PASSWORD */}
       <FormItem>
         <Label htmlFor="passwordConfirm">Подтвердите пароль</Label>
         <Input
@@ -150,7 +147,7 @@ export const CreateAccountForm: React.FC = () => {
       </FormItem>
 
       {/* SUBMIT */}
-      <Button className="w-full" disabled={loading} type="submit">
+      <Button type="submit" className="w-full" disabled={loading}>
         {loading ? 'Создание аккаунта…' : 'Создать аккаунт'}
       </Button>
     </form>

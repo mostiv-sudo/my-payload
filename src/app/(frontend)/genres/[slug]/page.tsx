@@ -1,27 +1,36 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { MediaGrid, MediaItem } from '@/components/MediaGrid'
+import { MediaGrid } from '@/components/MediaGrid'
 import { getAnime } from '@/lib/getAnime'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { MediaItem } from '@/lib/types'
 
 export default function GenrePageClient() {
-  const pathname = usePathname()
+  const pathname = usePathname() || ''
   const searchParams = useSearchParams()
   const router = useRouter()
 
   const genreSlug = pathname.split('/').at(-1) || ''
-  const [type, setType] = useState<'movie' | 'series'>(
-    (searchParams.get('type') as 'movie' | 'series') || 'series',
-  )
-  const [page, setPage] = useState(Number(searchParams.get('page') || 1))
-  const [items, setItems] = useState<MediaItem[]>([])
-  const [totalPages, setTotalPages] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
+  const typeFromUrl = (searchParams.get('type') as 'movie' | 'series') || 'series'
+  const pageFromUrl = Number(searchParams.get('page') || 1)
 
-  const fetchData = async () => {
+  const [type, setType] = useState<'movie' | 'series'>(typeFromUrl)
+  const [page, setPage] = useState<number>(pageFromUrl)
+  const [items, setItems] = useState<MediaItem[]>([])
+  const [totalPages, setTotalPages] = useState<number>(1)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+
+  // Синхронизация state с URL
+  useEffect(() => {
+    if (type !== typeFromUrl) setType(typeFromUrl)
+    if (page !== pageFromUrl) setPage(pageFromUrl)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeFromUrl, pageFromUrl])
+
+  const fetchData = useCallback(async () => {
     if (!genreSlug) return
     setIsLoading(true)
     try {
@@ -36,21 +45,25 @@ export default function GenrePageClient() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [genreSlug, type, page])
 
   useEffect(() => {
     fetchData()
-  }, [genreSlug, type, page])
+  }, [fetchData])
+
+  const updateUrl = (newType: 'movie' | 'series', newPage: number) => {
+    router.push(`/genres/${genreSlug}?type=${newType}&page=${newPage}`, { scroll: false })
+  }
 
   const handleTypeChange = (newType: 'movie' | 'series') => {
     setType(newType)
     setPage(1)
-    router.push(`/genres/${genreSlug}?type=${newType}&page=1`, { scroll: false })
+    updateUrl(newType, 1)
   }
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
-    router.push(`/genres/${genreSlug}?type=${type}&page=${newPage}`, { scroll: false })
+    updateUrl(type, newPage)
   }
 
   return (

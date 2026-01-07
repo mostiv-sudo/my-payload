@@ -1,56 +1,25 @@
-// app/film/page.tsx
-
-import { getMedia, resolveGenreIds } from '@/lib/getMedia'
 import { MediaPageLayout } from '@/components/layouts/MediaPageLayout'
-import { toNumber, parseGenres } from '@/lib/query'
+import { parseMovieSearchParams } from '@/lib/parseMovieSearchParams'
+import { getMovies } from '@/lib/getMovies'
 import type { SearchParams } from '@/lib/types'
 
-/**
- * Нормализует searchParams для страницы фильмов
- */
-function parseMovieSearchParams(params: SearchParams) {
-  return {
-    sort: params.sort ?? 'rating_desc',
-    page: toNumber(params.page, 1),
-    limit: toNumber(params.limit, 24),
-    age: params.age ? Number(params.age) : undefined,
-    status: params.status,
-    genreSlugs: parseGenres(params.genre),
-  }
+export const dynamic = 'force-dynamic' // Next.js будет полностью рендерить серверно
+
+interface MoviesPageProps {
+  searchParams: Promise<SearchParams>
 }
 
-export default async function MoviesPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>
-}) {
-  const params = parseMovieSearchParams(await searchParams)
+export default async function MoviesPage({ searchParams }: MoviesPageProps) {
+  // 1️⃣ Ждём searchParams
+  const resolvedSearchParams = await searchParams
 
-  /**
-   * slug → genreId
-   */
-  const genreIds = await resolveGenreIds(params.genreSlugs)
+  // 2️⃣ Парсим и нормализуем параметры
+  const params = parseMovieSearchParams(resolvedSearchParams)
 
-  /**
-   * Фильтры для фильмов (anime + type=movie)
-   */
-  const filters = {
-    type: 'movie' as const,
-    ...(genreIds.length > 0 && { genres: genreIds }),
-    ...(params.age !== undefined && { age: params.age }),
-    ...(params.status && { status: params.status }),
-  }
+  // 3️⃣ Получаем фильмы
+  const { items, totalPages } = await getMovies(params)
 
-  /**
-   * Получаем данные из коллекции anime
-   */
-  const { items, totalPages } = await getMedia({
-    page: params.page,
-    limit: params.limit,
-    sort: params.sort,
-    filters,
-  })
-
+  // 4️⃣ Рендер страницы
   return (
     <MediaPageLayout
       title="Фильмы"

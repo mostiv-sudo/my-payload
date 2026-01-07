@@ -6,7 +6,6 @@ export type MediaType = 'anime' | 'movie' | 'series'
 
 /**
  * Endpoint API / источника данных
- * Можно расширить, если появятся отдельные сервисы
  */
 export type MediaEndpoint = 'anime' | 'movie' | 'series'
 
@@ -18,9 +17,8 @@ export type MediaStatus = 'announced' | 'airing' | 'completed'
 /**
  * Фильтры для получения медиаконтента (API / getMedia)
  *
- * ⚠️ ВАЖНО:
- * - genres может быть string[] (slug) ИЛИ number[] (id)
- * - преобразование slug → id выполняется ДО запроса
+ * ⚠️ genres может быть string[] (slug) ИЛИ number[] (id)
+ * Преобразование slug → id выполняется ДО запроса
  */
 export type MediaFilters = {
   /** Жанры: slug'и или числовые ID */
@@ -32,11 +30,18 @@ export type MediaFilters = {
   /** Статус выхода */
   status?: MediaStatus
 
-  /**
-   * Тип контента (актуально для anime endpoint)
-   * Например: movie / series
-   */
+  /** Тип контента (movie | series) */
   type?: Exclude<MediaType, 'anime'>
+}
+
+/**
+ * Фильтры для аниме (точно string[] для жанров)
+ */
+export type AnimeFilters = {
+  genres?: string[]
+  age?: number
+  status?: MediaStatus
+  type?: 'movie' | 'series'
 }
 
 /**
@@ -51,28 +56,17 @@ export type SortType = 'rating_desc' | 'rating_asc' | 'year_desc' | 'year_asc'
  * т.к. приходят напрямую из searchParams
  */
 export type SearchParams = {
-  /** Пагинация */
   page?: string
   limit?: string
-
-  /** Сортировка */
   sort?: SortType
-
-  /** Фильтры */
   genre?: string // comma-separated: "action,drama"
   status?: MediaStatus
   age?: string
-
-  /**
-   * Тип контента (для /anime)
-   * Например: movie / series
-   */
-  type?: Exclude<MediaType, 'anime'>
+  type?: Exclude<MediaType, 'anime'> | 'movie' | 'series'
 }
 
 /**
  * Базовый тип элемента медиаконтента
- * (можно расширять под конкретные use-case)
  */
 export type MediaItem = {
   id: number
@@ -97,7 +91,6 @@ export type Genre = {
 
 /**
  * Тип аниме (расширяет MediaItem)
- * Можно добавить поля из payload / API
  */
 export type Anime = MediaItem & {
   episodes?: Array<{

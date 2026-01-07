@@ -9,18 +9,26 @@ type Props = {
   limit: number
 }
 
-function buildPages(page: number, totalPages: number) {
-  const pages = new Set<number | 'dots'>()
+/**
+ * Генерация массива страниц с "dots" для пропусков
+ */
+function buildPages(current: number, total: number): (number | 'dots')[] {
+  const pages: (number | 'dots')[] = []
 
-  pages.add(1)
-  if (page > 3) pages.add('dots')
-  if (page > 1) pages.add(page - 1)
-  pages.add(page)
-  if (page < totalPages) pages.add(page + 1)
-  if (page < totalPages - 2) pages.add('dots')
-  if (totalPages > 1) pages.add(totalPages)
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+    return pages
+  }
 
-  return Array.from(pages)
+  pages.push(1)
+  if (current > 3) pages.push('dots')
+  if (current > 2) pages.push(current - 1)
+  if (current !== 1 && current !== total) pages.push(current)
+  if (current < total - 1) pages.push(current + 1)
+  if (current < total - 2) pages.push('dots')
+  pages.push(total)
+
+  return pages
 }
 
 export function Pagination({ page, totalPages, limit }: Props) {
@@ -29,16 +37,18 @@ export function Pagination({ page, totalPages, limit }: Props) {
 
   const pages = buildPages(page, totalPages)
 
-  // Создаем новый объект параметров, без старого page
-  const currentParams = new URLSearchParams(searchParams.toString())
-  currentParams.delete('page')
+  // Создаём URLSearchParams, удаляем старую страницу и добавляем limit
+  const currentParams = new URLSearchParams(searchParams?.toString() ?? '')
   currentParams.set('limit', String(limit))
+  currentParams.delete('page') // чтобы не было дублирования
+
+  const buildHref = (p: number) => `?${currentParams.toString()}&page=${p}`
 
   return (
-    <div className="flex items-center justify-center gap-1 mt-10 ">
+    <div className="flex items-center justify-center gap-1 mt-10">
       {/* PREV */}
       <Link
-        href={`?${currentParams.toString()}&page=${page - 1}`}
+        href={buildHref(Math.max(page - 1, 1))}
         className={`px-3 py-1 rounded-md border text-sm ${
           page === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-muted'
         }`}
@@ -54,7 +64,7 @@ export function Pagination({ page, totalPages, limit }: Props) {
         ) : (
           <Link
             key={`page-${p}-${i}`}
-            href={`?${currentParams.toString()}&page=${p}`}
+            href={buildHref(p)}
             className={`px-3 py-1 rounded-md text-sm ${
               p === page ? 'bg-primary text-primary-foreground' : 'border hover:bg-muted'
             }`}
@@ -66,7 +76,7 @@ export function Pagination({ page, totalPages, limit }: Props) {
 
       {/* NEXT */}
       <Link
-        href={`?${currentParams.toString()}&page=${page + 1}`}
+        href={buildHref(Math.min(page + 1, totalPages))}
         className={`px-3 py-1 rounded-md border text-sm ${
           page === totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-muted'
         }`}

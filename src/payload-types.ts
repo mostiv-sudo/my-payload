@@ -76,6 +76,7 @@ export interface Config {
     comments: Comment;
     bookmarks: Bookmark;
     ratings: Rating;
+    'episode-generator': EpisodeGenerator;
     search: Search;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -93,6 +94,7 @@ export interface Config {
     comments: CommentsSelect<false> | CommentsSelect<true>;
     bookmarks: BookmarksSelect<false> | BookmarksSelect<true>;
     ratings: RatingsSelect<false> | RatingsSelect<true>;
+    'episode-generator': EpisodeGeneratorSelect<false> | EpisodeGeneratorSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -322,6 +324,49 @@ export interface Rating {
   createdAt: string;
 }
 /**
+ * Генерация эпизодов для выбранного аниме
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "episode-generator".
+ */
+export interface EpisodeGenerator {
+  id: number;
+  /**
+   * Выберите аниме, для которого будут созданы эпизоды
+   */
+  anime: number | Anime;
+  /**
+   * Сезон, к которому относятся эпизоды
+   */
+  season: number;
+  /**
+   * Часть/арка (например, Zenpen, Kouhen)
+   */
+  part?: string | null;
+  /**
+   * Общее количество эпизодов для генерации
+   */
+  totalEpisodes: number;
+  /**
+   * Дата и время выхода первой серии
+   */
+  firstAirDate: string;
+  /**
+   * Шаг между сериями в днях
+   */
+  stepDays?: number | null;
+  /**
+   * Шаг между сериями в часах (дополнительно к дням)
+   */
+  stepHours?: number | null;
+  /**
+   * Шаг между сериями в минутах (дополнительно к дням)
+   */
+  stepMinutes?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This is a collection of automatically created search results. These results are used by the global site search and will be updated automatically as documents in the CMS are created or updated.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -401,6 +446,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'ratings';
         value: number | Rating;
+      } | null)
+    | ({
+        relationTo: 'episode-generator';
+        value: number | EpisodeGenerator;
       } | null)
     | ({
         relationTo: 'search';
@@ -605,6 +654,22 @@ export interface RatingsSelect<T extends boolean = true> {
   anime?: T;
   rating?: T;
   comment?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "episode-generator_select".
+ */
+export interface EpisodeGeneratorSelect<T extends boolean = true> {
+  anime?: T;
+  season?: T;
+  part?: T;
+  totalEpisodes?: T;
+  firstAirDate?: T;
+  stepDays?: T;
+  stepHours?: T;
+  stepMinutes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

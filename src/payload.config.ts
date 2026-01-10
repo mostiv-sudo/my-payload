@@ -23,6 +23,7 @@ import { ru } from './languages/ru'
 
 // Плагины
 import { searchPlugin } from '@payloadcms/plugin-search'
+import { EpisodeGenerator } from './collections/EpisodeGenerator'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -48,7 +49,18 @@ export default buildConfig({
     translations: { en, ru },
   },
 
-  collections: [Users, Media, Anime, Genres, Studios, Episodes, Comments, Bookmarks, Ratings],
+  collections: [
+    Users,
+    Media,
+    Anime,
+    Genres,
+    Studios,
+    Episodes,
+    Comments,
+    Bookmarks,
+    Ratings,
+    EpisodeGenerator,
+  ],
 
   editor: lexicalEditor(),
 

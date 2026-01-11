@@ -3,11 +3,19 @@ import type { CollectionConfig } from 'payload'
 function makeSlug(str: string) {
   return str
     .toLowerCase()
-    .replace(/\s+/g, '-') // пробелы -> дефис
-    .replace(/[^\w\-]+/g, '') // удалить все кроме букв, цифр и дефисов
-    .replace(/\-\-+/g, '-') // двойные дефисы -> один
-    .replace(/^-+/, '') // убрать дефис в начале
-    .replace(/-+$/, '') // убрать дефис в конце
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '')
+}
+
+// объединяем дату + время → Date
+function combineDateAndTime(date: string, time: string) {
+  const [hours = '00', minutes = '00'] = time.split(':')
+  const d = new Date(date)
+  d.setHours(Number(hours), Number(minutes), 0, 0)
+  return d
 }
 
 export const EpisodeGenerator: CollectionConfig = {
@@ -31,7 +39,6 @@ export const EpisodeGenerator: CollectionConfig = {
       type: 'relationship',
       relationTo: 'anime',
       required: true,
-      admin: { description: 'Выберите аниме, для которого будут созданы эпизоды' },
     },
     {
       name: 'season',
@@ -39,48 +46,56 @@ export const EpisodeGenerator: CollectionConfig = {
       required: true,
       defaultValue: 1,
       min: 1,
-      admin: { description: 'Сезон, к которому относятся эпизоды' },
     },
     {
       name: 'part',
       type: 'text',
-      admin: { description: 'Часть/арка (например, Zenpen, Kouhen)' },
+      admin: {
+        description: 'Часть / арка (опционально)',
+      },
     },
     {
       name: 'totalEpisodes',
       type: 'number',
       required: true,
       min: 1,
-      admin: { description: 'Общее количество эпизодов для генерации' },
     },
+
+    // 📅 ДАТА
     {
-      name: 'firstAirDate',
+      name: 'firstAirDay',
       type: 'date',
       required: true,
-      admin: { description: 'Дата и время выхода первой серии' },
+      admin: {
+        description: 'Дата выхода первой серии',
+        date: {
+          pickerAppearance: 'dayOnly',
+        },
+      },
     },
+
+    // ⏰ ВРЕМЯ
+    {
+      name: 'firstAirTime',
+      type: 'text',
+      required: true,
+      defaultValue: '00:00',
+      admin: {
+        description: 'Время выхода (HH:mm)',
+        placeholder: '18:30',
+      },
+      validate: (val: any) =>
+        /^([01]\d|2[0-3]):([0-5]\d)$/.test(val as string) ? true : 'Формат времени HH:mm',
+    },
+
     {
       name: 'stepDays',
       type: 'number',
       defaultValue: 7,
       min: 1,
-      admin: { description: 'Шаг между сериями в днях' },
-    },
-    {
-      name: 'stepHours',
-      type: 'number',
-      defaultValue: 0,
-      min: 0,
-      max: 23,
-      admin: { description: 'Шаг между сериями в часах (дополнительно к дням)' },
-    },
-    {
-      name: 'stepMinutes',
-      type: 'number',
-      defaultValue: 0,
-      min: 0,
-      max: 59,
-      admin: { description: 'Шаг между сериями в минутах (дополнительно к дням)' },
+      admin: {
+        description: 'Интервал между сериями (в днях)',
+      },
     },
   ],
 
@@ -93,13 +108,12 @@ export const EpisodeGenerator: CollectionConfig = {
           season = 1,
           part,
           totalEpisodes,
-          firstAirDate,
+          firstAirDay,
+          firstAirTime,
           stepDays = 7,
-          stepHours = 0,
-          stepMinutes = 0,
         } = doc
 
-        if (!anime || !totalEpisodes || !firstAirDate) return
+        if (!anime || !totalEpisodes || !firstAirDay || !firstAirTime) return
 
         const animeDoc = await payload.findByID({
           collection: 'anime',
@@ -107,31 +121,41 @@ export const EpisodeGenerator: CollectionConfig = {
         })
         if (!animeDoc) return
 
-        const start = new Date(firstAirDate)
+        // уже существующие серии
+        const existing = await payload.find({
+          collection: 'episodes',
+          where: {
+            anime: { equals: anime },
+            season: { equals: season },
+          },
+          pagination: false,
+        })
+
+        const existingNumbers = new Set((existing.docs as any[]).map((e) => e.episodeNumber))
+
+        const startDate = combineDateAndTime(firstAirDay, firstAirTime)
 
         for (let i = 0; i < totalEpisodes; i++) {
-          const airDate = new Date(start)
-          airDate.setDate(start.getDate() + i * stepDays)
-          airDate.setHours(start.getHours() + i * stepHours)
-          airDate.setMinutes(start.getMinutes() + i * stepMinutes)
+          const episodeNumber = i + 1
+          if (existingNumbers.has(episodeNumber)) continue
 
-          // Формируем название серии
+          const airDate = new Date(startDate)
+          airDate.setDate(startDate.getDate() + i * stepDays)
+
           const partText = part ? `: ${part}` : ''
-          const title = `${animeDoc.title}${partText} — Серия ${i + 1}`
-          const title_en = `${animeDoc.title_en}${partText} — Episode ${i + 1}`
-          const slug = makeSlug(title_en)
+          const title = `${animeDoc.title}${partText} — Серия ${episodeNumber}`
+          const titleEnBase = animeDoc.title_en || animeDoc.title
+          const titleEn = `${titleEnBase}${partText} — Episode ${episodeNumber}`
 
           await payload.create({
             collection: 'episodes',
-            draft: false,
             data: {
               anime,
               season,
-              episodeNumber: i + 1,
+              episodeNumber,
               title,
-
-              released: airDate.toISOString(),
-              slug,
+              released: airDate.toISOString(), // ✅ string
+              slug: makeSlug(titleEn),
             },
           })
         }

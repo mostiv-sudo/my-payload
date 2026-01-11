@@ -331,38 +331,25 @@ export interface Rating {
  */
 export interface EpisodeGenerator {
   id: number;
-  /**
-   * Выберите аниме, для которого будут созданы эпизоды
-   */
   anime: number | Anime;
-  /**
-   * Сезон, к которому относятся эпизоды
-   */
   season: number;
   /**
-   * Часть/арка (например, Zenpen, Kouhen)
+   * Часть / арка (опционально)
    */
   part?: string | null;
-  /**
-   * Общее количество эпизодов для генерации
-   */
   totalEpisodes: number;
   /**
-   * Дата и время выхода первой серии
+   * Дата выхода первой серии
    */
-  firstAirDate: string;
+  firstAirDay: string;
   /**
-   * Шаг между сериями в днях
+   * Время выхода (HH:mm)
+   */
+  firstAirTime: string;
+  /**
+   * Интервал между сериями (в днях)
    */
   stepDays?: number | null;
-  /**
-   * Шаг между сериями в часах (дополнительно к дням)
-   */
-  stepHours?: number | null;
-  /**
-   * Шаг между сериями в минутах (дополнительно к дням)
-   */
-  stepMinutes?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -666,10 +653,9 @@ export interface EpisodeGeneratorSelect<T extends boolean = true> {
   season?: T;
   part?: T;
   totalEpisodes?: T;
-  firstAirDate?: T;
+  firstAirDay?: T;
+  firstAirTime?: T;
   stepDays?: T;
-  stepHours?: T;
-  stepMinutes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

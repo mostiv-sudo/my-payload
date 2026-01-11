@@ -2,6 +2,7 @@ import { makeSlug } from '../utils/slug'
 
 type KodikAnime = {
   id: string
+  title?: string
   slug?: string
   duration?: number
   seasons?: Record<
@@ -28,6 +29,8 @@ export function mapEpisodesFromJson(anime: KodikAnime): EpisodeSeed[] {
   if (!anime?.seasons) return []
 
   const episodes: EpisodeSeed[] = []
+
+  const animeTitle = anime.title?.trim() || 'Без названия'
   const baseSlug = anime.slug?.trim() || anime.id
 
   for (const [seasonKey, season] of Object.entries(anime.seasons)) {
@@ -48,7 +51,7 @@ export function mapEpisodesFromJson(anime: KodikAnime): EpisodeSeed[] {
         animeKodikId: anime.id,
         season: seasonNumber,
         episodeNumber,
-        title: `Episode ${episodeNumber}`,
+        title: `${animeTitle} — Серия ${episodeNumber}`,
         description: '',
         duration: anime.duration ?? 0,
         released: null,

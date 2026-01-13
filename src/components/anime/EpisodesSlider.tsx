@@ -94,20 +94,19 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
       setCurrentSeason(ep.season)
 
       const params = new URLSearchParams(searchParams.toString())
-      params.set('season', String(ep.season))
       params.set('episode', String(ep.episodeNumber))
       router.replace(`?${params.toString()}`, { scroll: false })
     },
     [currentEpisode, router, searchParams],
   )
 
-  if (loading)
-    return (
-      <div className="animate-pulse space-y-4 mt-8">
-        <div className="h-6 w-40 bg-muted rounded" />
-        <div className="h-40 bg-muted rounded-2xl" />
-      </div>
-    )
+  // if (loading)
+  //   return (
+  //     <div className="animate-pulse space-y-4 mt-8">
+  //       <div className="h-6 w-40 bg-muted rounded" />
+  //       <div className="h-40 bg-muted rounded-2xl" />
+  //     </div>
+  //   )
 
   if (!episodes.length) return <p className="mt-8 text-muted-foreground">Серии отсутствуют.</p>
 
@@ -154,52 +153,65 @@ export const EpisodesSlider: React.FC<Props> = ({ animeId }) => {
       {/* Слайдер */}
       {currentSeason && seasons[currentSeason] && (
         <>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-4">
             <Layers size={22} className="text-primary" />
             <h2 className="text-2xl font-bold">Серии</h2>
           </div>
 
-          <Swiper
-            modules={[Navigation]}
-            navigation
-            spaceBetween={14}
-            slidesPerView={2}
-            breakpoints={{
-              640: { slidesPerView: 3 },
-              768: { slidesPerView: 4 },
-              1024: { slidesPerView: 6 },
-            }}
-          >
-            {seasons[currentSeason].map((ep) => {
-              const isActive = currentEpisode?.id === ep.id
-              return (
-                <SwiperSlide key={ep.id} className="p-1">
-                  <div
-                    onClick={() => handleEpisodeChange(ep)}
-                    className={`flex flex-col items-center h-full cursor-pointer rounded-xl border p-4 transition-all ${
-                      isActive
-                        ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
-                        : 'border-border/60 bg-background/60 hover:-translate-y-0.5'
-                    }`}
-                  >
-                    <div className="text-sm font-semibold">Эпизод {ep.episodeNumber}</div>
-                    <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                      {formatDate(ep.released)}
+          <div className="relative group">
+            <Swiper
+              modules={[Navigation]}
+              navigation={{
+                nextEl: '.swiper-button-next-custom',
+                prevEl: '.swiper-button-prev-custom',
+              }}
+              spaceBetween={14}
+              slidesPerView={2}
+              breakpoints={{
+                640: { slidesPerView: 3 },
+                768: { slidesPerView: 4 },
+                1024: { slidesPerView: 6 },
+              }}
+            >
+              {seasons[currentSeason].map((ep) => {
+                const isActive = currentEpisode?.id === ep.id
+                return (
+                  <SwiperSlide key={ep.id} className="p-1">
+                    <div
+                      onClick={() => handleEpisodeChange(ep)}
+                      className={`flex flex-col items-center h-full cursor-pointer rounded-xl border p-4 transition-all ${
+                        isActive
+                          ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                          : 'border-border/60 bg-background/60 hover:-translate-y-0.5'
+                      }`}
+                    >
+                      <div className="text-sm font-semibold">Эпизод {ep.episodeNumber}</div>
+                      <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                        {formatDate(ep.released)}
+                      </div>
+                      <div className="mt-4 text-xs font-medium flex items-center gap-2">
+                        {ep.videoLink ? (
+                          <span className="flex items-center gap-1 text-primary">
+                            <Play size={14} /> Смотреть
+                          </span>
+                        ) : (
+                          <span className="text-yellow-500">⏳ Скоро</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-4 text-xs font-medium flex items-center gap-2">
-                      {ep.videoLink ? (
-                        <span className="flex items-center gap-1 text-primary">
-                          <Play size={14} /> Смотреть
-                        </span>
-                      ) : (
-                        <span className="text-yellow-500">⏳ Скоро</span>
-                      )}
-                    </div>
-                  </div>
-                </SwiperSlide>
-              )
-            })}
-          </Swiper>
+                  </SwiperSlide>
+                )
+              })}
+            </Swiper>
+
+            {/* Кастомные стрелки */}
+            <button className="swiper-button-prev-custom hidden md:flex items-center justify-center absolute top-1/2 -translate-y-1/2 left-0 z-20 w-10 h-10 bg-white dark:bg-gray-900 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-opacity opacity-0 group-hover:opacity-100">
+              ‹
+            </button>
+            <button className="swiper-button-next-custom hidden md:flex items-center justify-center absolute top-1/2 -translate-y-1/2 right-0 z-20 w-10 h-10 bg-white dark:bg-gray-900 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-opacity opacity-0 group-hover:opacity-100">
+              ›
+            </button>
+          </div>
         </>
       )}
     </section>

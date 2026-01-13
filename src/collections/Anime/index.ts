@@ -13,6 +13,8 @@ export const Anime: CollectionConfig = {
     slug: true,
     title: true,
     poster: true,
+    poster_url: true,
+
     rating: true,
     minimal_age: true,
     completion: true,

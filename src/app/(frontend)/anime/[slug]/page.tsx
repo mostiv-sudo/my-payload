@@ -50,7 +50,7 @@ export default async function AnimeDetailsPage({ params }: Props) {
   const genres: Genre[] = await getGenresByIds(extractGenreIds(anime.genres || []))
 
   return (
-    <div className="lg:container mx-auto px-4 py-8 mt-20 space-y-8">
+    <div className="lg:container mx-auto px-4 py-8 space-y-8">
       {/* Карточка аниме */}
       <Card className="relative overflow-hidden rounded-3xl border border-border/60 bg-background/80 dark:bg-background/50 backdrop-blur-md shadow-sm dark:shadow-black/20 hover:shadow-md transition-all">
         <CardContent className="flex flex-col lg:flex-row gap-8 p-6 lg:p-10">

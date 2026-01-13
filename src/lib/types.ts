@@ -110,3 +110,18 @@ export type Anime = MediaItem & {
   seasonsCount?: number
   title_en?: string
 }
+
+export interface Episode {
+  id: string
+  released: string
+  episodeNumber: number
+  videoLink: string
+  anime: {
+    slug: string
+    title: string
+    poster_url: string
+    rating: number
+    minimal_age?: number
+    status: 'airing' | 'finished'
+  }
+}

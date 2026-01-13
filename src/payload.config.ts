@@ -38,7 +38,7 @@ export default buildConfig({
   },
 
   onInit: async (payload) => {
-    if (process.env.SEED === 'full') {
+    if (process.env.SEED === 'episodes') {
       await import('./endpoint').then(({ seed }) => seed(payload))
     }
   },

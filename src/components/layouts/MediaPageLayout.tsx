@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { FilterSidebar } from '@/components/filters/FilterSidebar'
 import { SortSelect } from '@/components/filters/SortSelect'
 import { MediaGrid } from '@/components/MediaGrid'
@@ -17,6 +16,7 @@ type Props = {
   sort: string
   showRating?: boolean
   type?: 'movie' | 'series'
+  isLoading?: boolean
 }
 
 export function MediaPageLayout({
@@ -27,51 +27,32 @@ export function MediaPageLayout({
   totalPages,
   limit,
   sort,
-  showRating,
+  showRating = true,
   type,
+  isLoading = false,
 }: Props) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [displayItems, setDisplayItems] = useState<MediaItem[]>(items)
-
-  // Обновление отображаемых элементов при изменении items (например, смена страницы или фильтров)
-  useEffect(() => {
-    setIsLoading(true)
-
-    const timeout = setTimeout(() => {
-      setDisplayItems(items)
-      setIsLoading(false)
-    }, 300) // задержка для плавного перехода
-
-    return () => clearTimeout(timeout)
-  }, [items])
-
   return (
-    <div className="container mx-auto py-10 min-h-[70vh]">
+    <div className="container px-4 py-6 sm:py-10 min-h-[70vh]">
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Sidebar с фильтрами */}
-        <aside className="w-full md:w-72 flex-shrink-0">
+        {/* Sidebar */}
+        <aside className="w-full md:w-72 shrink-0 md:sticky md:top-20 h-fit">
           <FilterSidebar basePath={basePath} type={type} />
         </aside>
 
-        {/* Основной контент */}
+        {/* Content */}
         <main className="flex-1 flex flex-col gap-6">
-          {/* Заголовок и сортировка */}
-          <header className="flex flex-wrap gap-4 items-center justify-between">
-            <h1 className="text-3xl font-bold">{title}</h1>
+          {/* Header */}
+          <header className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
             <SortSelect basePath={basePath} value={sort} />
           </header>
 
-          {/* Сетка с элементами */}
-          <MediaGrid
-            items={displayItems}
-            showRating={showRating}
-            isLoading={isLoading}
-            limit={limit}
-          />
+          {/* Grid */}
+          <MediaGrid items={items} showRating={showRating} limit={limit} isLoading={isLoading} />
 
-          {/* Пагинация */}
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center pt-4">
+            <div className="flex justify-center pt-2 sm:pt-4">
               <Pagination page={page} totalPages={totalPages} limit={limit} />
             </div>
           )}

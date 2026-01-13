@@ -1,25 +1,22 @@
 import { MediaPageLayout } from '@/components/layouts/MediaPageLayout'
-import { parseMovieSearchParams } from '@/lib/parseMovieSearchParams'
 import { getMovies } from '@/lib/getMovies'
+import { parseMovieSearchParams } from '@/lib/parseMovieSearchParams'
 import type { SearchParams } from '@/lib/types'
 
-export const dynamic = 'force-dynamic' // Next.js будет полностью рендерить серверно
+export const dynamic = 'force-dynamic'
 
-interface MoviesPageProps {
+export default async function MoviesPage({
+  searchParams,
+}: {
   searchParams: Promise<SearchParams>
-}
+}) {
+  // 1️⃣ Нормализуем searchParams строго под фильмы
+  const params = parseMovieSearchParams(await searchParams)
 
-export default async function MoviesPage({ searchParams }: MoviesPageProps) {
-  // 1️⃣ Ждём searchParams
-  const resolvedSearchParams = await searchParams
-
-  // 2️⃣ Парсим и нормализуем параметры
-  const params = parseMovieSearchParams(resolvedSearchParams)
-
-  // 3️⃣ Получаем фильмы
+  // 2️⃣ Передаём ОДИН объект — без ручной сборки
   const { items, totalPages } = await getMovies(params)
 
-  // 4️⃣ Рендер страницы
+  // 3️⃣ Рендер
   return (
     <MediaPageLayout
       title="Фильмы"
@@ -29,8 +26,8 @@ export default async function MoviesPage({ searchParams }: MoviesPageProps) {
       totalPages={totalPages}
       limit={params.limit}
       sort={params.sort}
-      showRating
       type="movie"
+      showRating
     />
   )
 }

@@ -82,9 +82,9 @@ export function GenresList({ limit, selectedSlug }: Props) {
         </div>
       ) : displayedGenres.length ? (
         <Carousel className="w-full py-2 relative">
-          <CarouselContent className="-ml-4 flex gap-2 p-2">
+          <CarouselContent className="-ml-1 flex gap-3 px-1 py-2 grid-cols-3">
             {displayedGenres.map((g) => (
-              <CarouselItem key={g.id} className="pl-2 md:basis-auto">
+              <CarouselItem key={g.id} className="pl-2 basis-auto">
                 <Link href={`/genres/${g.slug}`} passHref>
                   <Card
                     className={`transition-transform duration-300 hover:scale-105 cursor-pointer rounded-lg shadow-md

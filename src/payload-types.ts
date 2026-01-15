@@ -140,8 +140,12 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  /**
+   * Можно изменить в настройках профиля
+   */
   username?: string | null;
-  emailVerified?: boolean | null;
+  avatar?: (number | null) | Media;
+  roles?: ('admin' | 'editor' | 'user')[] | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -490,7 +494,8 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   username?: T;
-  emailVerified?: T;
+  avatar?: T;
+  roles?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

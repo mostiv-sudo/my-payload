@@ -1,16 +1,17 @@
 'use client'
 
-import { FormError } from '@/components/forms/FormError'
-import { FormItem } from '@/components/forms/FormItem'
+import React, { useCallback, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Eye, EyeOff } from 'lucide-react'
+
+import { useAuth } from '@/providers/Auth'
 import { Message } from '@/components/Message'
+import { FormItem } from '@/components/forms/FormItem'
+import { FormError } from '@/components/forms/FormError'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/providers/Auth'
-import { useRouter, useSearchParams } from 'next/navigation'
-import React, { useCallback, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Eye, EyeOff } from 'lucide-react'
 
 type FormData = {
   email: string
@@ -19,9 +20,9 @@ type FormData = {
 }
 
 export const CreateAccountForm: React.FC = () => {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
-  const router = useRouter()
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,43 +33,54 @@ export const CreateAccountForm: React.FC = () => {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<FormData>()
+  } = useForm<FormData>({
+    mode: 'onBlur',
+  })
 
   const password = watch('password')
 
-  const passwordStrength = password
-    ? password.length >= 10
+  const passwordStrength = !password
+    ? null
+    : password.length >= 10
       ? 'strong'
       : password.length >= 6
         ? 'medium'
         : 'weak'
-    : null
 
   const onSubmit = useCallback(
     async (data: FormData) => {
       setLoading(true)
       setError(null)
 
-      const { passwordConfirm, ...payload } = data
-
       try {
+        // 🔐 регистрация
         const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            email: data.email,
+            password: data.password,
+          }),
         })
 
         if (!res.ok) {
           const json = await res.json().catch(() => null)
-          throw new Error(json?.errors?.[0]?.message || 'Не удалось создать аккаунт')
+          throw new Error(json?.errors?.[0]?.message ?? 'Не удалось создать аккаунт')
         }
 
-        await login({ email: data.email, password: data.password })
+        // 🔑 автологин
+        await login({
+          email: data.email,
+          password: data.password,
+        })
 
-        const redirect = searchParams.get('redirect')
-        router.push(redirect ?? `/account?success=${encodeURIComponent('Аккаунт успешно создан')}`)
+        const redirectTo =
+          searchParams.get('redirect') ??
+          `/account?success=${encodeURIComponent('Аккаунт успешно создан')}`
+
+        router.push(redirectTo)
       } catch (err: any) {
-        setError(err.message || 'Не удалось создать аккаунт')
+        setError(err.message ?? 'Ошибка регистрации')
       } finally {
         setLoading(false)
       }
@@ -86,8 +98,11 @@ export const CreateAccountForm: React.FC = () => {
         <Input
           id="email"
           type="email"
+          autoComplete="email"
           placeholder="you@example.com"
-          {...register('email', { required: 'Email обязателен.' })}
+          {...register('email', {
+            required: 'Email обязателен',
+          })}
         />
         {errors.email && <FormError message={errors.email.message} />}
       </FormItem>
@@ -95,17 +110,24 @@ export const CreateAccountForm: React.FC = () => {
       {/* PASSWORD */}
       <FormItem>
         <Label htmlFor="password">Пароль</Label>
+
         <div className="relative">
           <Input
             id="password"
             type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
             {...register('password', {
-              required: 'Пароль обязателен.',
-              minLength: { value: 6, message: 'Минимум 6 символов' },
+              required: 'Пароль обязателен',
+              minLength: {
+                value: 6,
+                message: 'Минимум 6 символов',
+              },
             })}
           />
+
           <button
             type="button"
+            aria-label="Показать пароль"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             onClick={() => setShowPassword((v) => !v)}
           >
@@ -115,7 +137,7 @@ export const CreateAccountForm: React.FC = () => {
 
         {passwordStrength && (
           <p
-            className={`text-xs mt-2 ${
+            className={`mt-2 text-xs ${
               passwordStrength === 'strong'
                 ? 'text-emerald-500'
                 : passwordStrength === 'medium'
@@ -132,14 +154,15 @@ export const CreateAccountForm: React.FC = () => {
         {errors.password && <FormError message={errors.password.message} />}
       </FormItem>
 
-      {/* CONFIRM PASSWORD */}
+      {/* CONFIRM */}
       <FormItem>
         <Label htmlFor="passwordConfirm">Подтвердите пароль</Label>
         <Input
           id="passwordConfirm"
           type="password"
+          autoComplete="new-password"
           {...register('passwordConfirm', {
-            required: 'Подтвердите пароль.',
+            required: 'Подтвердите пароль',
             validate: (value) => value === password || 'Пароли не совпадают',
           })}
         />

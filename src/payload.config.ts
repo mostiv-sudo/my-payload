@@ -16,6 +16,7 @@ import { Episodes } from './collections/Episodes'
 import { Comments } from './collections/Comments'
 import { Bookmarks } from './collections/Bookmarks'
 import { Ratings } from './collections/Ratings'
+import { EpisodeGenerator } from './collections/EpisodeGenerator'
 
 // Языки
 import { en } from './languages/en'
@@ -23,7 +24,9 @@ import { ru } from './languages/ru'
 
 // Плагины
 import { searchPlugin } from '@payloadcms/plugin-search'
-import { EpisodeGenerator } from './collections/EpisodeGenerator'
+
+// Jobs
+import { runEpisodesSyncKodik } from './collections/Episodes/tasks/syncEpisodes.task'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -31,7 +34,6 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     user: Users.slug,
-    // Обязательно указываем путь для importMap
     importMap: {
       baseDir: path.resolve(dirname),
     },
@@ -40,6 +42,17 @@ export default buildConfig({
   onInit: async (payload) => {
     if (process.env.SEED === 'episodes') {
       await import('./endpoint').then(({ seed }) => seed(payload))
+    }
+
+    /**
+     * 👉 Опционально: поставить первую job при старте
+     */
+    if (process.env.ENABLE_JOB_WORKERS === 'true') {
+      await payload.jobs.queue({
+        task: 'sync-episodes-from-kodik',
+        queue: 'nightly',
+        input: {}, // <- обязательно!
+      })
     }
   },
 
@@ -61,6 +74,42 @@ export default buildConfig({
     Ratings,
     EpisodeGenerator,
   ],
+
+  /* ===========================
+     JOBS + CRON
+  =========================== */
+  jobs: {
+    tasks: [
+      {
+        slug: 'sync-episodes-from-kodik', // <- используем допустимое имя
+        handler: async ({ req }) => {
+          // Запускаем синхронизацию
+          const result = await runEpisodesSyncKodik(req)
+
+          // Возвращаем результат в формате TaskHandlerResult
+          return {
+            output: result, // сюда можно вернуть объект с { ok, updated, skipped, notFound, ... }
+          }
+        },
+      },
+    ],
+
+    autoRun: [
+      {
+        cron: '0 */2 * * *', // каждые 2 часа
+        queue: 'nightly',
+        limit: 50,
+      },
+    ],
+
+    shouldAutoRun: async () => process.env.ENABLE_JOB_WORKERS === 'true',
+
+    processingOrder: {
+      queues: {
+        nightly: 'createdAt',
+      },
+    },
+  },
 
   editor: lexicalEditor(),
 
@@ -84,26 +133,10 @@ export default buildConfig({
       searchOverrides: {
         fields: ({ defaultFields }) => [
           ...defaultFields,
-          {
-            name: 'searchTitle',
-            type: 'text',
-            admin: { readOnly: true },
-          },
-          {
-            name: 'slug',
-            type: 'text',
-            admin: { readOnly: true },
-          },
-          {
-            name: 'type',
-            type: 'text',
-            admin: { readOnly: true },
-          },
-          {
-            name: 'year',
-            type: 'number',
-            admin: { readOnly: true },
-          },
+          { name: 'searchTitle', type: 'text', admin: { readOnly: true } },
+          { name: 'slug', type: 'text', admin: { readOnly: true } },
+          { name: 'type', type: 'text', admin: { readOnly: true } },
+          { name: 'year', type: 'number', admin: { readOnly: true } },
         ],
       },
       beforeSync: ({ originalDoc, searchDoc }) => {

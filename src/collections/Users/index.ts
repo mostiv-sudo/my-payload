@@ -42,12 +42,6 @@ export const Users: CollectionConfig = {
     },
 
     {
-      name: 'avatar',
-      type: 'upload',
-      relationTo: 'media',
-    },
-
-    {
       name: 'roles',
       type: 'select',
       hasMany: true,

@@ -45,14 +45,24 @@ export default buildConfig({
     }
 
     /**
-     * 👉 Опционально: поставить первую job при старте
+     * 👉 Автоматическая постановка и запуск задачи sync-episodes-from-kodik
+     * при старте сервера, если включены job workers
      */
     if (process.env.ENABLE_JOB_WORKERS === 'true') {
+      // Ставим задачу в очередь
       await payload.jobs.queue({
         task: 'sync-episodes-from-kodik',
         queue: 'nightly',
-        input: {}, // <- обязательно!
+        input: {}, // обязательно
       })
+      console.log('[Jobs] Задача sync-episodes-from-kodik поставлена в очередь nightly')
+
+      // Сразу запускаем очередь
+      const results = await payload.jobs.run({
+        queue: 'nightly',
+        limit: 500,
+      })
+      console.log('[Jobs] Очередь nightly запущена при старте', results)
     }
   },
 
@@ -81,14 +91,11 @@ export default buildConfig({
   jobs: {
     tasks: [
       {
-        slug: 'sync-episodes-from-kodik', // <- используем допустимое имя
+        slug: 'sync-episodes-from-kodik',
         handler: async ({ req }) => {
-          // Запускаем синхронизацию
           const result = await runEpisodesSyncKodik(req)
-
-          // Возвращаем результат в формате TaskHandlerResult
           return {
-            output: result, // сюда можно вернуть объект с { ok, updated, skipped, notFound, ... }
+            output: result, // { ok, updated, skipped, notFound, ... }
           }
         },
       },
@@ -96,7 +103,7 @@ export default buildConfig({
 
     autoRun: [
       {
-        cron: '0 */2 * * *', // каждые 2 часа
+        cron: '*/2 * * * *', // каждые 5 минут
         queue: 'nightly',
         limit: 50,
       },

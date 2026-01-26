@@ -13,7 +13,7 @@ export default async function AnimePage({ searchParams }: { searchParams: Promis
     ...(params.age !== undefined && { age: params.age }),
     ...(params.status && { status: params.status }),
   }
-
+  // TODO: обновить запрос
   const { items, totalPages } = await getAnime({
     sort: params.sort,
     page: params.page,

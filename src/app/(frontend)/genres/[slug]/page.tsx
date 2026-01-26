@@ -94,7 +94,7 @@ export default function GenrePageClient() {
         isLoading={isLoading}
         showRating
         limit={25}
-        cols={{ base: 2, sm: 3, md: 4, lg: 5, xl: 7 }}
+        cols={{ base: 2, xl: 5 }}
       />
 
       {/* Пагинация */}
